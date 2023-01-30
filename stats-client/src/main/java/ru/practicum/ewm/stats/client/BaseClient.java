@@ -1,5 +1,6 @@
 package ru.practicum.ewm.stats.client;
 
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-public class BaseClient {
+class BaseClient {
     protected final RestTemplate rest;
 
     public BaseClient(RestTemplate rest) {
