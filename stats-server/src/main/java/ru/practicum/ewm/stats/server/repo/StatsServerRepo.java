@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface StatsServerRepo extends JpaRepository<Hit, Long> {
 
-    @Query( "SELECT " +
+    @Query("SELECT " +
             "   new ru.practicum.ewm.stats.dto.HitDtoResponse(h.app, h.uri, COUNT(h.id)) " +
             "FROM Hit h " +
             "WHERE h.timestamp BETWEEN ?1 AND ?2 " +
@@ -19,7 +19,7 @@ public interface StatsServerRepo extends JpaRepository<Hit, Long> {
             "ORDER BY COUNT(h.id) DESC ")
     List<HitDtoResponse> getStats(LocalDateTime start, LocalDateTime end);
 
-    @Query( "SELECT " +
+    @Query("SELECT " +
             "   new ru.practicum.ewm.stats.dto.HitDtoResponse(h.app, h.uri, COUNT(h.id)) " +
             "FROM Hit h " +
             "WHERE h.timestamp BETWEEN ?1 AND ?2 AND h.uri IN (?3) " +
@@ -27,7 +27,7 @@ public interface StatsServerRepo extends JpaRepository<Hit, Long> {
             "ORDER BY COUNT(h.id) DESC ")
     List<HitDtoResponse> getStats(LocalDateTime start, LocalDateTime end, Collection<String> uris);
 
-    @Query( "SELECT " +
+    @Query("SELECT " +
             "   new ru.practicum.ewm.stats.dto.HitDtoResponse(h.app, h.uri, COUNT(DISTINCT h.ip)) " +
             "FROM Hit h " +
             "WHERE h.timestamp BETWEEN ?1 AND ?2 " +
@@ -35,7 +35,7 @@ public interface StatsServerRepo extends JpaRepository<Hit, Long> {
             "ORDER BY COUNT(DISTINCT h.ip) DESC ")
     List<HitDtoResponse> getStatsUnique(LocalDateTime start, LocalDateTime end);
 
-    @Query( "SELECT " +
+    @Query("SELECT " +
             "   new ru.practicum.ewm.stats.dto.HitDtoResponse(h.app, h.uri, COUNT(DISTINCT h.ip)) " +
             "FROM Hit h " +
             "WHERE h.timestamp BETWEEN ?1 AND ?2 AND h.uri IN (?3) " +
