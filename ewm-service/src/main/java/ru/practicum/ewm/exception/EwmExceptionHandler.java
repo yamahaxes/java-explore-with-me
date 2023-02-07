@@ -51,4 +51,16 @@ public class EwmExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
     }
+
+    @ExceptionHandler(value = {ForbiddenException.class})
+    public ResponseEntity<ErrorMessage> forbidden(RuntimeException ex) {
+        ErrorMessage errorMessage = new ErrorMessage(
+                "FORBIDDEN",
+                "For the requested operation the conditions are not met.",
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorMessage);
+    }
 }

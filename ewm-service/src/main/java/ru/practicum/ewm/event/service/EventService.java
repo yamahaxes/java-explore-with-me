@@ -7,15 +7,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.event.controller.pub.EventSort;
-import ru.practicum.ewm.event.dto.EventDtoUpdateAdmin;
-import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.EventShortDto;
-import ru.practicum.ewm.event.dto.EventState;
+import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.repo.EventRepo;
+import ru.practicum.ewm.exception.ForbiddenException;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.user.repo.UserRepo;
 import ru.practicum.ewm.util.EwmUtils;
 import ru.practicum.ewm.util.Page;
 import ru.practicum.ewm.util.QPredicates;
@@ -23,6 +22,7 @@ import ru.practicum.ewm.util.QPredicates;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +30,7 @@ public class EventService {
 
     private final EventRepo eventRepo;
     private final EventMapper eventMapper;
+    private final UserRepo userRepo;
 
     public List<EventFullDto> getEvents(List<Long> users,
                                         List<EventState> states,
@@ -117,6 +118,60 @@ public class EventService {
         checkEvent(id);
 
         return eventMapper.toEventFullDto(eventRepo.getEventByIdAndState(id, EventState.PUBLISHED));
+    }
+
+    public List<EventShortDto> getEvents(Long userId, Integer from, Integer size) {
+        checkUser(userId);
+
+        return eventMapper.toEventShortDtoList(
+                eventRepo.getEventByInitiatorId(userId, new Page(from, size))
+        );
+    }
+
+    public EventFullDto createEvent(Long userId, EventNewDto dto) {
+        checkUser(userId);
+
+        Event event = eventMapper.toModel(dto);
+
+        return eventMapper.toEventFullDto(event);
+    }
+
+    public EventFullDto getEvent(Long userId, Long eventId) {
+
+        Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(userId, eventId);
+        if (optionalEvent.isEmpty()) {
+            throw new NotFoundException("Event by id=" + eventId + " and userId=" + userId + " was not found.");
+        }
+
+        return eventMapper.toEventFullDto(
+            optionalEvent.get()
+        );
+    }
+
+    public EventFullDto updateEvent(Long userId, Long eventId, EventDtoUpdateUser dto) {
+
+        Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(userId, eventId);
+        if (optionalEvent.isEmpty()) {
+            throw new NotFoundException("Event by id=" + eventId + " and userId=" + userId + " was not found.");
+        }
+
+        Event eventTarget = optionalEvent.get();
+        if (eventTarget.getState() == EventState.PUBLISHED) {
+            throw new ForbiddenException("Event by id=" + eventId + " already published.");
+        }
+
+        Event src = eventMapper.toModel(dto);
+        EwmUtils.copyNotNullProperties(src, eventTarget);
+
+        return eventMapper.toEventFullDto(
+                eventRepo.save(eventTarget)
+        );
+    }
+
+    private void checkUser(Long userId) {
+        if (!userRepo.existsById(userId)) {
+            throw new NotFoundException("User by id=" + userId + " was not found.");
+        }
     }
 
     private void checkEvent(Long eventId) {
