@@ -8,6 +8,7 @@ import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.category.repo.CategoryRepo;
 import ru.practicum.ewm.event.dto.EventDtoUpdateAdmin;
 import ru.practicum.ewm.event.dto.EventFullDto;
+import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.exception.NotFoundException;
 
@@ -41,9 +42,19 @@ public class EventMapper {
         return modelMapper.map(model, EventFullDto.class);
     }
 
+    public EventShortDto toEventShortDto(Event model) {
+        return modelMapper.map(model, EventShortDto.class);
+    }
+
     public List<EventFullDto> toEventFullDtoList(List<Event> models) {
         return models.stream()
                 .map(this::toEventFullDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<EventShortDto> toEventShortDtoList(List<Event> models) {
+        return models.stream()
+                .map(this::toEventShortDto)
                 .collect(Collectors.toList());
     }
 
