@@ -6,13 +6,12 @@ import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.user.dto.UserDtoShort;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Data
 public class EventFullDto {
     private String annotation;
 
-    private Set<CategoryDto> category;
+    private CategoryDto category;
 
     private Long confirmedRequests = 0L;
 

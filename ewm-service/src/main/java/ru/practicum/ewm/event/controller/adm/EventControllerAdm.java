@@ -5,10 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.event.dto.EventDtoUpdateAdmin;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventState;
 import ru.practicum.ewm.event.service.EventService;
 
+import javax.validation.constraints.Positive;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -36,6 +38,15 @@ public class EventControllerAdm {
 
         return eventService.getEvents(users, states, categories,
                 rangeStart, rangeEnd, from, size);
+    }
+
+    @PatchMapping("/{eventId}")
+    @ResponseStatus(HttpStatus.OK)
+    public EventFullDto updateEvent(@Positive @PathVariable Long eventId,
+                                    @RequestBody EventDtoUpdateAdmin dto) {
+
+        log.info("PATCH updateEvent(): eventId={}, dto={}", eventId, dto);
+        return eventService.updateEvent(eventId, dto);
     }
 
 }
