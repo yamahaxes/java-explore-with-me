@@ -80,17 +80,14 @@ public class RequestService {
         Request request = requestRepo.getRequestByIdIsAndRequesterId(requestId, userId)
                 .orElseThrow(() -> new NotFoundException("Request by id=" + requestId + " and user id=" + userId + " was not found."));
 
+        request.setStatus(RequestStatus.CANCELED);
+        requestRepo.save(request);
+
         Event event = request.getEvent();
-
-        RequestDto requestDto = requestMapper.toDto(request);
-        requestDto.setStatus(RequestStatus.CANCELED);
-
-        requestRepo.delete(request);
-
         event.setConfirmedRequests(event.getConfirmedRequests() - 1);
         eventRepo.save(event);
 
-        return requestDto;
+        return requestMapper.toDto(request);
     }
 
     private void checkUser(Long userId) {

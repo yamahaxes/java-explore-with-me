@@ -152,23 +152,19 @@ public class EventService {
     public EventFullDto getEvent(Long userId, Long eventId) {
 
         Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(eventId, userId);
-        if (optionalEvent.isEmpty()) {
-            throw new NotFoundException("Event by id=" + eventId + " and userId=" + userId + " was not found.");
-        }
 
         return eventMapper.toEventFullDto(
-            optionalEvent.get()
+            optionalEvent
+                    .orElseThrow(() -> new NotFoundException("Event by id=" + eventId + " and userId=" + userId + " was not found."))
         );
     }
 
     public EventFullDto updateEvent(Long userId, Long eventId, EventDtoUpdateUser dto) {
 
         Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(eventId, userId);
-        if (optionalEvent.isEmpty()) {
-            throw new NotFoundException("Event by id=" + eventId + " and userId=" + userId + " was not found.");
-        }
+        Event eventTarget = optionalEvent
+                .orElseThrow(() -> new NotFoundException("Event by id=" + eventId + " and userId=" + userId + " was not found."));
 
-        Event eventTarget = optionalEvent.get();
         if (eventTarget.getState() == EventState.PUBLISHED) {
             throw new ForbiddenException("Event by id=" + eventId + " already published.");
         }
