@@ -12,7 +12,7 @@ public class EventNewDto {
 
     @NotNull
     @Size(min = 20, max = 2000)
-    private String annotations;
+    private String annotation;
 
     @NotNull
     private Long category;

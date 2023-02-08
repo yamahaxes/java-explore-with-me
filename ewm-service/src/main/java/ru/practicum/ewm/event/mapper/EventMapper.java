@@ -8,6 +8,7 @@ import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.category.repo.CategoryRepo;
 import ru.practicum.ewm.event.dto.EventDtoUpdateAdmin;
 import ru.practicum.ewm.event.dto.EventFullDto;
+import ru.practicum.ewm.event.dto.EventNewDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -26,6 +27,9 @@ public class EventMapper {
     @PostConstruct
     private void setupModelMapper() {
         Converter<Long, Category> longToCategoryConverter = mappingContext -> {
+            if (mappingContext.getSource() == null) {
+                return null;
+            }
             if (!categoryRepo.existsById(mappingContext.getSource())) {
                 throw new NotFoundException("Category by id=" + mappingContext.getSource() +
                         " was not found.");
@@ -35,6 +39,9 @@ public class EventMapper {
 
         modelMapper.createTypeMap(EventDtoUpdateAdmin.class, Event.class)
                 .addMappings(mapper -> mapper.using(longToCategoryConverter).map(EventDtoUpdateAdmin::getCategory, Event::setCategory));
+
+        modelMapper.createTypeMap(EventNewDto.class, Event.class)
+                .addMappings(mapper -> mapper.using(longToCategoryConverter).map(EventNewDto::getCategory, Event::setCategory));
 
     }
 

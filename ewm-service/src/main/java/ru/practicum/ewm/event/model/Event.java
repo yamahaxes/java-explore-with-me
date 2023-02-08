@@ -32,9 +32,9 @@ public class Event {
     private int confirmedRequests;
 
     @Column(name = "created_on")
-    private LocalDateTime createdOn;
+    private LocalDateTime createdOn = LocalDateTime.now();
 
-    @Column
+    @Column(nullable = false)
     private String description;
 
     @Column(name = "event_date")
@@ -57,11 +57,11 @@ public class Event {
     private LocalDateTime publishedOn;
 
     @Column(name = "request_moderation")
-    private boolean requestModeration;
+    private Boolean requestModeration;
 
     @Column
     @Enumerated(EnumType.STRING)
-    private EventState state;
+    private EventState state = EventState.PENDING;
 
     @Column
     private String title;

@@ -2,6 +2,7 @@ package ru.practicum.ewm.event.controller.pub;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -32,8 +33,8 @@ public class EventControllerPub {
     public List<EventShortDto> getEvents(@RequestParam(required = false) String text,
                                          @RequestParam(required = false) List<Long> categories,
                                          @RequestParam(required = false) Boolean paid,
-                                         @RequestParam(required = false) LocalDateTime rangeStart,
-                                         @RequestParam(required = false) LocalDateTime rangeEnd,
+                                         @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") @RequestParam(required = false) LocalDateTime rangeStart,
+                                         @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") @RequestParam(required = false) LocalDateTime rangeEnd,
                                          @RequestParam(required = false) Boolean onlyAvailable,
                                          @RequestParam(required = false) EventSort sort,
                                          @RequestParam(required = false) Integer from,
@@ -69,12 +70,15 @@ public class EventControllerPub {
             dto.setIp(request.getRemoteAddr());
             dto.setTimestamp(LocalDateTime.now());
             dto.setUri(request.getRequestURI());
-
-            ResponseEntity<Object> result = statsClient.createHit(dto);
-            if (result.getStatusCode() == HttpStatus.CREATED) {
-                log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
-            } else {
-                log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
+            try {
+                ResponseEntity<Object> result = statsClient.createHit(dto);
+                if (result.getStatusCode() == HttpStatus.CREATED) {
+                    log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
+                } else {
+                    log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
+                }
+            } catch (RuntimeException ex) {
+                log.info("Error send state: " + ex.getMessage());
             }
         }).start();
     }

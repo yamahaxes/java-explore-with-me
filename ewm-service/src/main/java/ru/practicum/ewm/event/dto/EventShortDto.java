@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 public class EventShortDto {
 
-    private String annotations;
+    private String annotation;
 
     private CategoryDto category;
 

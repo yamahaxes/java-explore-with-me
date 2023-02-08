@@ -75,7 +75,7 @@ public class EventService {
                     if (aBoolean) {
                         return QEvent.event.confirmedRequests.loe(QEvent.event.participantLimit);
                     }
-                    return Expressions.TRUE;
+                    return Expressions.asBoolean(true).isTrue();
                 })
                 .add(EventState.PUBLISHED, QEvent.event.state::eq);
 
@@ -109,6 +109,12 @@ public class EventService {
 
         EwmUtils.copyNotNullProperties(src, entityTarget);
 
+        if (dto.getStateAction() == EventStateAction.PUBLISH_EVENT) {
+            entityTarget.setState(EventState.PUBLISHED);
+        } else if (dto.getStateAction() == EventStateAction.REJECT_EVENT) {
+            entityTarget.setState(EventState.CANCELED);
+        }
+
         return eventMapper.toEventFullDto(
                 eventRepo.save(entityTarget)
         );
@@ -132,8 +138,9 @@ public class EventService {
         checkUser(userId);
 
         Event event = eventMapper.toModel(dto);
+        event.setInitiator(userRepo.getReferenceById(userId));
 
-        return eventMapper.toEventFullDto(event);
+        return eventMapper.toEventFullDto(eventRepo.save(event));
     }
 
     public EventFullDto getEvent(Long userId, Long eventId) {
