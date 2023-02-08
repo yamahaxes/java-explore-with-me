@@ -29,7 +29,7 @@ public class Event {
     private Category category;
 
     @Column(name = "confirmed_requests")
-    private int confirmedRequests;
+    private Integer confirmedRequests = 0;
 
     @Column(name = "created_on")
     private LocalDateTime createdOn = LocalDateTime.now();
@@ -48,16 +48,16 @@ public class Event {
     private Location location;
 
     @Column
-    private boolean paid;
+    private Boolean paid;
 
     @Column(name = "participant_limit")
-    private int participantLimit;
+    private Integer participantLimit;
 
     @Column
     private LocalDateTime publishedOn;
 
     @Column(name = "request_moderation")
-    private Boolean requestModeration;
+    private Boolean requestModeration = Boolean.TRUE;
 
     @Column
     @Enumerated(EnumType.STRING)
@@ -67,6 +67,6 @@ public class Event {
     private String title;
 
     @Column
-    private int views;
+    private Integer views;
 
 }

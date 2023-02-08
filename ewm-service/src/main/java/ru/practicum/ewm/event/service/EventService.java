@@ -117,11 +117,7 @@ public class EventService {
 
         EwmUtils.copyNotNullProperties(src, entityTarget);
 
-        if (dto.getStateAction() == EventStateAction.PUBLISH_EVENT) {
-            entityTarget.setState(EventState.PUBLISHED);
-        } else if (dto.getStateAction() == EventStateAction.REJECT_EVENT) {
-            entityTarget.setState(EventState.CANCELED);
-        }
+        doEventAction(entityTarget, dto.getStateAction());
 
         return eventMapper.toEventFullDto(
                 eventRepo.save(entityTarget)
@@ -148,12 +144,14 @@ public class EventService {
         Event event = eventMapper.toModel(dto);
         event.setInitiator(userRepo.getReferenceById(userId));
 
+        event.setViews(0);
+
         return eventMapper.toEventFullDto(eventRepo.save(event));
     }
 
     public EventFullDto getEvent(Long userId, Long eventId) {
 
-        Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(userId, eventId);
+        Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(eventId, userId);
         if (optionalEvent.isEmpty()) {
             throw new NotFoundException("Event by id=" + eventId + " and userId=" + userId + " was not found.");
         }
@@ -165,7 +163,7 @@ public class EventService {
 
     public EventFullDto updateEvent(Long userId, Long eventId, EventDtoUpdateUser dto) {
 
-        Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(userId, eventId);
+        Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(eventId, userId);
         if (optionalEvent.isEmpty()) {
             throw new NotFoundException("Event by id=" + eventId + " and userId=" + userId + " was not found.");
         }
@@ -177,6 +175,8 @@ public class EventService {
 
         Event src = eventMapper.toModel(dto);
         EwmUtils.copyNotNullProperties(src, eventTarget);
+
+        doEventAction(eventTarget, dto.getStateAction());
 
         return eventMapper.toEventFullDto(
                 eventRepo.save(eventTarget)
@@ -235,6 +235,18 @@ public class EventService {
         }
 
         return requestStatusUpdateResult;
+    }
+
+    private void doEventAction(Event entityTarget, EventStateAction stateAction) {
+
+        if (stateAction == EventStateAction.PUBLISH_EVENT) {
+            entityTarget.setState(EventState.PUBLISHED);
+        } else if (stateAction == EventStateAction.REJECT_EVENT) {
+            entityTarget.setState(EventState.REJECTED);
+        } else if (stateAction == EventStateAction.CANCEL_REVIEW) {
+            entityTarget.setState(EventState.CANCELED);
+        }
+
     }
 
     private void checkUser(Long userId) {

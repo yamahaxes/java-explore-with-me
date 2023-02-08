@@ -83,6 +83,8 @@ public class RequestService {
         Event event = request.getEvent();
 
         RequestDto requestDto = requestMapper.toDto(request);
+        requestDto.setStatus(RequestStatus.CANCELED);
+
         requestRepo.delete(request);
 
         event.setConfirmedRequests(event.getConfirmedRequests() - 1);
