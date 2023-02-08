@@ -62,7 +62,7 @@ public class RequestService {
         if (event.getRequestModeration()) {
             newRequest.setStatus(RequestStatus.PENDING);
         } else {
-            newRequest.setStatus(RequestStatus.PUBLISHED);
+            newRequest.setStatus(RequestStatus.CONFIRMED);
         }
 
         RequestDto requestDto = requestMapper.toDto(requestRepo.save(newRequest));

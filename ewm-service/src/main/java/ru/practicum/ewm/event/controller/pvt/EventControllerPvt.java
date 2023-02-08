@@ -5,12 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.event.dto.EventDtoUpdateUser;
-import ru.practicum.ewm.event.dto.EventFullDto;
-import ru.practicum.ewm.event.dto.EventNewDto;
-import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.service.EventService;
+import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.ForbiddenException;
+import ru.practicum.ewm.request.dto.RequestDto;
+import ru.practicum.ewm.request.dto.RequestStatus;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
@@ -67,6 +67,30 @@ public class EventControllerPvt {
         }
 
         return eventService.updateEvent(userId, eventId, dto);
+    }
+
+    @GetMapping("/{eventId}/requests")
+    @ResponseStatus(HttpStatus.OK)
+    public List<RequestDto> getRequests(@Positive @PathVariable Long userId,
+                                        @Positive @PathVariable Long eventId) {
+        log.info("GET getRequests(): userId={}, eventId={}", userId, eventId);
+        return eventService.getRequests(userId, eventId);
+    }
+
+    @PatchMapping("/{eventId}/requests")
+    @ResponseStatus(HttpStatus.OK)
+    public RequestStatusUpdateResult updateRequestsStatus(@Positive @PathVariable Long userId,
+                                                         @Positive @PathVariable Long eventId,
+                                                         @Valid @RequestBody RequestStatusUpdate dto) {
+
+        log.info("PATCH updateStatusRequest(): userId={}, eventId={}, dto={}", userId, eventId, dto);
+
+        if (dto.getStatus() != RequestStatus.CONFIRMED &&
+                dto.getStatus() != RequestStatus.REJECTED) {
+            throw new BadRequestException("Incorrect status.");
+        }
+
+        return eventService.updateRequestsStatus(userId, eventId, dto);
     }
 
     private void validateEventTime(LocalDateTime dateTime) {

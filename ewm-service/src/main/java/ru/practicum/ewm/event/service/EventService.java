@@ -6,6 +6,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.event.controller.pub.EventSort;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.mapper.EventMapper;
@@ -14,6 +15,11 @@ import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.repo.EventRepo;
 import ru.practicum.ewm.exception.ForbiddenException;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.request.dto.RequestDto;
+import ru.practicum.ewm.request.dto.RequestStatus;
+import ru.practicum.ewm.request.mapper.RequestMapper;
+import ru.practicum.ewm.request.model.Request;
+import ru.practicum.ewm.request.repo.RequestRepo;
 import ru.practicum.ewm.user.repo.UserRepo;
 import ru.practicum.ewm.util.EwmUtils;
 import ru.practicum.ewm.util.Page;
@@ -31,6 +37,8 @@ public class EventService {
     private final EventRepo eventRepo;
     private final EventMapper eventMapper;
     private final UserRepo userRepo;
+    private final RequestRepo requestRepo;
+    private final RequestMapper requestMapper;
 
     public List<EventFullDto> getEvents(List<Long> users,
                                         List<EventState> states,
@@ -173,6 +181,60 @@ public class EventService {
         return eventMapper.toEventFullDto(
                 eventRepo.save(eventTarget)
         );
+    }
+
+    public List<RequestDto> getRequests(Long userId, Long eventId) {
+        return requestMapper.toDtoList(
+                requestRepo.getRequestsByEventIdAndEventInitiatorId(eventId, userId)
+        );
+    }
+
+    @Transactional
+    public RequestStatusUpdateResult updateRequestsStatus(Long userId, Long eventId, RequestStatusUpdate dto) {
+
+        checkUser(userId);
+        checkEvent(eventId);
+
+        Event event = eventRepo.getEventByIdAndInitiatorId(eventId, userId)
+                .orElseThrow(() -> new NotFoundException("Event by id=" + eventId + " was not found."));
+
+        RequestStatusUpdateResult requestStatusUpdateResult = new RequestStatusUpdateResult();
+
+        if (!event.getRequestModeration()
+                || event.getParticipantLimit() == 0) {
+            return requestStatusUpdateResult;
+        }
+
+        int numRequests = (int) dto.getRequestIds().stream().distinct().count();
+
+        if (event.getConfirmedRequests() + numRequests > event.getParticipantLimit()) {
+            throw new ForbiddenException("Request limit reached");
+        }
+
+        List<Request> requests = requestRepo.getRequestsByEventIdAndEventInitiatorId(eventId, userId);
+        requests.forEach(request -> {
+            if (!request.getStatus().equals(RequestStatus.PENDING)) {
+                throw new ForbiddenException("Status");
+            }
+        });
+
+        requests.forEach(request -> request.setStatus(dto.getStatus()));
+        requestRepo.saveAll(requests);
+
+        if (dto.getStatus().equals(RequestStatus.CONFIRMED)) {
+            event.setConfirmedRequests(event.getConfirmedRequests() + numRequests);
+            eventRepo.save(event);
+
+            requestStatusUpdateResult.setConfirmedRequests(
+                    requestMapper.toDtoList(requestRepo.getRequestsByEventIdAndEventInitiatorIdAndStatus(eventId, userId, RequestStatus.CONFIRMED))
+            );
+        } else if (dto.getStatus().equals(RequestStatus.REJECTED)) {
+            requestStatusUpdateResult.setConfirmedRequests(
+                    requestMapper.toDtoList(requestRepo.getRequestsByEventIdAndEventInitiatorIdAndStatus(eventId, userId, RequestStatus.REJECTED))
+            );
+        }
+
+        return requestStatusUpdateResult;
     }
 
     private void checkUser(Long userId) {
