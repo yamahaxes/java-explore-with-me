@@ -17,6 +17,7 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -80,14 +81,16 @@ public class EventControllerPvt {
     @PatchMapping("/{eventId}/requests")
     @ResponseStatus(HttpStatus.OK)
     public RequestStatusUpdateResult updateRequestsStatus(@Positive @PathVariable Long userId,
-                                                         @Positive @PathVariable Long eventId,
-                                                         @RequestBody(required = false) RequestStatusUpdate dto) {
+                                                          @Positive @PathVariable Long eventId,
+                                                          @RequestBody(required = false) Optional<RequestStatusUpdate> dtoOptional) {
 
-        log.info("PATCH updateRequestsStatus(): userId={}, eventId={}, dto={}", userId, eventId, dto);
+        log.info("PATCH updateRequestsStatus(): userId={}, eventId={}, dto={}", userId, eventId, dtoOptional);
 
-        if (dto == null) {
-            throw new ForbiddenException("error");
+        if (dtoOptional.isEmpty()) {
+            throw new ForbiddenException("Required parameter not specified");
         }
+
+        RequestStatusUpdate dto = dtoOptional.get();
 
         if (dto.getStatus() != RequestStatus.CONFIRMED &&
                 dto.getStatus() != RequestStatus.REJECTED) {

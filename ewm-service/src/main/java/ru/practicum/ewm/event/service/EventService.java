@@ -155,7 +155,6 @@ public class EventService {
 
         event.setInitiator(userRepo.getReferenceById(userId));
         event.setState(EventState.PENDING);
-        event.setRequestModeration(true);
         event.setViews(0);
 
         return eventMapper.toEventFullDto(eventRepo.save(event));
