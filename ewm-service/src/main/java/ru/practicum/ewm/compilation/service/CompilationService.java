@@ -1,5 +1,6 @@
 package ru.practicum.ewm.compilation.service;
 
+import com.querydsl.core.types.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.compilation.dto.CompilationDto;
@@ -15,7 +16,6 @@ import ru.practicum.ewm.util.Page;
 import ru.practicum.ewm.util.QPredicates;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -55,10 +55,14 @@ public class CompilationService {
         QPredicates predicates = QPredicates.builder()
                 .add(pinned, QCompilation.compilation.pinned::eq);
 
-        return compilationRepo.findAll(predicates.buildAnd(), new Page(from, size)).toList()
-                .stream()
-                .map(compilationMapper::toDto)
-                .collect(Collectors.toList());
+        Predicate predicate = predicates.buildAnd();
+        Page page = new Page(from, size);
+
+        List<Compilation> compilations = predicate == null ?
+                compilationRepo.findAll(page).toList() :
+                compilationRepo.findAll(predicate, page).toList();
+
+        return compilationMapper.toDtoList(compilations);
     }
 
     public CompilationDto getCompilation(Long compId) {

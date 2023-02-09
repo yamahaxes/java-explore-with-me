@@ -1,5 +1,6 @@
 package ru.practicum.ewm.user.service;
 
+import com.querydsl.core.types.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -26,8 +27,14 @@ public class UserService {
         QPredicates predicates = QPredicates.builder()
                 .add(ids, QUser.user.id::in);
 
-        return userRepo.findAll(predicates.buildAnd(), new Page(from, size))
-                .toList().stream()
+        Page page = new Page(from, size);
+        Predicate predicate = predicates.buildAnd();
+
+        List<User> users = predicate == null ?
+                userRepo.findAll(page).toList() :
+                userRepo.findAll(predicate, page).toList();
+
+        return users.stream()
                 .map(userMapper::toUserDto)
                 .collect(Collectors.toList());
     }

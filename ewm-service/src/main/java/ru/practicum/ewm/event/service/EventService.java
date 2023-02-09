@@ -27,7 +27,6 @@ import ru.practicum.ewm.util.QPredicates;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -55,9 +54,14 @@ public class EventService {
                 .add(rangeStart, QEvent.event.eventDate::goe)
                 .add(rangeEnd, QEvent.event.eventDate::loe);
 
-        List<Event> events = eventRepo.findAll(predicates.buildAnd(), new Page(from, size)).toList();
+        Page page = new Page(from, size);
+        Predicate predicate = predicates.buildAnd();
 
-        return eventMapper.toEventFullDtoList(events);
+        if (predicate == null) {
+            return eventMapper.toEventFullDtoList(eventRepo.findAll(page).toList());
+        }
+
+        return eventMapper.toEventFullDtoList(eventRepo.findAll(predicate, page).toList());
     }
 
     public List<EventShortDto> getEvents(String text,
@@ -103,8 +107,12 @@ public class EventService {
             page = new Page(from, size);
         }
 
+        if (predicate == null) {
+            return eventMapper.toEventShortDtoList(eventRepo.findAll(page).toList());
+        }
+
         return eventMapper.toEventShortDtoList(
-                eventRepo.findAll(Objects.requireNonNull(predicate), page).toList()
+                eventRepo.findAll(predicate, page).toList()
         );
 
     }

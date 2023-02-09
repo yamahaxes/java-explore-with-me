@@ -19,8 +19,10 @@ public class Compilation {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @OneToMany
-    @JoinColumn(name = "compilation_id")
+    @ManyToMany
+    @JoinTable(name = "compilations_events",
+        joinColumns = @JoinColumn(name = "compilation_id"),
+        inverseJoinColumns = @JoinColumn(name = "event_id"))
     private Set<Event> events = new HashSet<>();
 
     @Column

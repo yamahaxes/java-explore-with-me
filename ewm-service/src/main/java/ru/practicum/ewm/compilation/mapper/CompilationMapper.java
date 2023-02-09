@@ -10,6 +10,8 @@ import ru.practicum.ewm.compilation.model.Compilation;
 import ru.practicum.ewm.event.repo.EventRepo;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,5 +44,11 @@ public class CompilationMapper {
 
     public CompilationDto toDto(Compilation model) {
         return modelMapper.map(model, CompilationDto.class);
+    }
+
+    public List<CompilationDto> toDtoList(List<Compilation> models) {
+        return models.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 }
