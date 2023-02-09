@@ -81,9 +81,13 @@ public class EventControllerPvt {
     @ResponseStatus(HttpStatus.OK)
     public RequestStatusUpdateResult updateRequestsStatus(@Positive @PathVariable Long userId,
                                                          @Positive @PathVariable Long eventId,
-                                                         @Valid @RequestBody RequestStatusUpdate dto) {
+                                                         @RequestBody(required = false) RequestStatusUpdate dto) {
 
-        log.info("PATCH updateStatusRequest(): userId={}, eventId={}, dto={}", userId, eventId, dto);
+        log.info("PATCH updateRequestsStatus(): userId={}, eventId={}, dto={}", userId, eventId, dto);
+
+        if (dto == null) {
+            throw new ForbiddenException("error");
+        }
 
         if (dto.getStatus() != RequestStatus.CONFIRMED &&
                 dto.getStatus() != RequestStatus.REJECTED) {
@@ -94,6 +98,10 @@ public class EventControllerPvt {
     }
 
     private void validateEventTime(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return;
+        }
+
         LocalDateTime now = LocalDateTime.now();
         if (now.plusHours(2).isAfter(dateTime)) {
             throw new ForbiddenException("Must contain a date that has not yet arrived.");

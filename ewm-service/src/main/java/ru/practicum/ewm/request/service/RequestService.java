@@ -51,7 +51,7 @@ public class RequestService {
 
         if (event.getConfirmedRequests() >= event.getParticipantLimit()
                 && event.getParticipantLimit() != 0) {
-            throw new ForbiddenException("Request limit exceeded");
+            throw new ForbiddenException("The event has reached its request limit");
         }
 
         Request newRequest = new Request();
@@ -59,18 +59,16 @@ public class RequestService {
         newRequest.setRequester(requester);
         newRequest.setEvent(event);
 
+        event.incConfirmedRequests();
+        eventRepo.save(event);
+
         if (event.getRequestModeration()) {
             newRequest.setStatus(RequestStatus.PENDING);
         } else {
             newRequest.setStatus(RequestStatus.CONFIRMED);
         }
 
-        RequestDto requestDto = requestMapper.toDto(requestRepo.save(newRequest));
-
-        event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-        eventRepo.save(event);
-
-        return requestDto;
+        return requestMapper.toDto(requestRepo.save(newRequest));
     }
 
     @Transactional

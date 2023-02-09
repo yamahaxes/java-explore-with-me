@@ -57,11 +57,11 @@ public class Event {
     private LocalDateTime publishedOn;
 
     @Column(name = "request_moderation")
-    private Boolean requestModeration = Boolean.TRUE;
+    private Boolean requestModeration;
 
     @Column
     @Enumerated(EnumType.STRING)
-    private EventState state = EventState.PENDING;
+    private EventState state;
 
     @Column
     private String title;
@@ -69,4 +69,7 @@ public class Event {
     @Column
     private Integer views;
 
+    public void incConfirmedRequests() {
+        confirmedRequests++;
+    }
 }

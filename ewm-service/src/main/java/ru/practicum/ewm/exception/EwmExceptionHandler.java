@@ -1,5 +1,6 @@
 package ru.practicum.ewm.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -26,7 +27,8 @@ public class EwmExceptionHandler {
         return ResponseEntity.badRequest().body(errorMessage);
     }
 
-    @ExceptionHandler(value = {ConstraintViolationException.class})
+    @ExceptionHandler(value = {ConstraintViolationException.class,
+            DataIntegrityViolationException.class})
     public ResponseEntity<ErrorMessage> conflict(RuntimeException ex) {
 
         ErrorMessage errorMessage = new ErrorMessage(

@@ -70,7 +70,7 @@ public class EventService {
                                          LocalDateTime rangeStart,
                                          LocalDateTime rangeEnd,
                                          Boolean onlyAvailable,
-                                         EventSort sort,
+                                         Optional<EventSort> sortOptional,
                                          Integer from,
                                          Integer size) {
 
@@ -98,13 +98,15 @@ public class EventService {
         List<Predicate> predicatesAll = List.of(predicatesOr.buildOr(), predicatesAnd.buildAnd());
         Predicate predicate = ExpressionUtils.allOf(predicatesAll);
 
-        Page page;
-        if (sort.equals(EventSort.VIEWS)) {
-            page = new Page(from, size, Sort.by("views"));
-        } else if (sort.equals(EventSort.EVENT_DATE)) {
-            page = new Page(from, size, Sort.by("eventDate"));
-        } else {
-            page = new Page(from, size);
+        Page page = new Page(from, size);
+
+        if (sortOptional.isPresent()) {
+            EventSort sort = sortOptional.get();
+            if (sort.equals(EventSort.VIEWS)) {
+                page = new Page(from, size, Sort.by("views"));
+            } else if (sort.equals(EventSort.EVENT_DATE)) {
+                page = new Page(from, size, Sort.by("eventDate"));
+            }
         }
 
         if (predicate == null) {
@@ -150,8 +152,10 @@ public class EventService {
         checkUser(userId);
 
         Event event = eventMapper.toModel(dto);
-        event.setInitiator(userRepo.getReferenceById(userId));
 
+        event.setInitiator(userRepo.getReferenceById(userId));
+        event.setState(EventState.PENDING);
+        event.setRequestModeration(true);
         event.setViews(0);
 
         return eventMapper.toEventFullDto(eventRepo.save(event));
@@ -209,31 +213,31 @@ public class EventService {
             return requestStatusUpdateResult;
         }
 
-        int numRequests = (int) dto.getRequestIds().stream().distinct().count();
-
-        if (event.getConfirmedRequests() + numRequests > event.getParticipantLimit()) {
-            throw new ForbiddenException("Request limit reached");
-        }
-
         List<Request> requests = requestRepo.getRequestsByEventIdAndEventInitiatorId(eventId, userId);
         requests.forEach(request -> {
             if (!request.getStatus().equals(RequestStatus.PENDING)) {
-                throw new ForbiddenException("Status");
+                throw new ForbiddenException("Request with id=" + request.getId() + " have not status PENDING.");
             }
-        });
 
-        requests.forEach(request -> request.setStatus(dto.getStatus()));
+            request.setStatus(dto.getStatus());
+            if (dto.getStatus() == RequestStatus.CONFIRMED) {
+                event.incConfirmedRequests();
+
+                if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
+                    throw new ForbiddenException("Request limit exceeded");
+                }
+            }
+         });
+
         requestRepo.saveAll(requests);
+        eventRepo.save(event);
 
         if (dto.getStatus().equals(RequestStatus.CONFIRMED)) {
-            event.setConfirmedRequests(event.getConfirmedRequests() + numRequests);
-            eventRepo.save(event);
-
             requestStatusUpdateResult.setConfirmedRequests(
                     requestMapper.toDtoList(requestRepo.getRequestsByEventIdAndEventInitiatorIdAndStatus(eventId, userId, RequestStatus.CONFIRMED))
             );
         } else if (dto.getStatus().equals(RequestStatus.REJECTED)) {
-            requestStatusUpdateResult.setConfirmedRequests(
+            requestStatusUpdateResult.setRejectedRequests(
                     requestMapper.toDtoList(requestRepo.getRequestsByEventIdAndEventInitiatorIdAndStatus(eventId, userId, RequestStatus.REJECTED))
             );
         }
@@ -244,11 +248,23 @@ public class EventService {
     private void doEventAction(Event entityTarget, EventStateAction stateAction) {
 
         if (stateAction == EventStateAction.PUBLISH_EVENT) {
+            if (entityTarget.getState() == EventState.PUBLISHED) {
+                throw new ForbiddenException("Event already published.");
+            } else if (entityTarget.getState() == EventState.CANCELED) {
+                throw new ForbiddenException("Event canceled.");
+            }
+
             entityTarget.setState(EventState.PUBLISHED);
         } else if (stateAction == EventStateAction.REJECT_EVENT) {
-            entityTarget.setState(EventState.REJECTED);
+            if (entityTarget.getState() == EventState.PUBLISHED) {
+                throw new ForbiddenException("Event already published.");
+            }
+
+            entityTarget.setState(EventState.CANCELED);
         } else if (stateAction == EventStateAction.CANCEL_REVIEW) {
             entityTarget.setState(EventState.CANCELED);
+        } else if (stateAction == EventStateAction.SEND_TO_REVIEW) {
+            entityTarget.setState(EventState.PENDING);
         }
 
     }

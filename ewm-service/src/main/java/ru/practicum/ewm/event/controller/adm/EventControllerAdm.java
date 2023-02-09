@@ -10,6 +10,7 @@ import ru.practicum.ewm.event.dto.EventDtoUpdateAdmin;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventState;
 import ru.practicum.ewm.event.service.EventService;
+import ru.practicum.ewm.exception.ForbiddenException;
 
 import javax.validation.constraints.Positive;
 import java.time.LocalDateTime;
@@ -47,7 +48,19 @@ public class EventControllerAdm {
                                     @RequestBody EventDtoUpdateAdmin dto) {
 
         log.info("PATCH updateEvent(): eventId={}, dto={}", eventId, dto);
+        validateEventTime(dto.getEventDate());
         return eventService.updateEvent(eventId, dto);
+    }
+
+    private void validateEventTime(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.plusHours(1).isAfter(dateTime)) {
+            throw new ForbiddenException("Must contain a date that has not yet arrived.");
+        }
     }
 
 }
