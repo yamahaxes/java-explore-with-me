@@ -18,8 +18,8 @@ public interface EventRepo extends JpaRepository<Event, Long>,
 
     Event getEventByIdAndState(Long id, EventState state);
 
-    List<Event> getEventByInitiatorId(Long initiator_id, Page page);
+    List<Event> getEventByInitiatorId(Long initiatorId, Page page);
 
-    Optional<Event> getEventByIdAndInitiatorId(Long id, Long initiator_id);
+    Optional<Event> getEventByIdAndInitiatorId(Long id, Long initiatorId);
 
 }

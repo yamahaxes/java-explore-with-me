@@ -275,7 +275,7 @@ public class EventService {
     }
 
     private void checkEvent(Long eventId) {
-        if(!eventRepo.existsById(eventId)) {
+        if (!eventRepo.existsById(eventId)) {
             throw new NotFoundException("Event by id=" + eventId + " was not found.");
         }
     }

@@ -41,7 +41,7 @@ public class RequestService {
         User requester = userRepo.getReferenceById(userId);
         Event event = eventRepo.getReferenceById(eventId);
 
-        if (event.getInitiator().getId().equals(userId)){
+        if (event.getInitiator().getId().equals(userId)) {
             throw new ForbiddenException("User with id=" + userId + " is the owner of the event by id=" + eventId);
         }
 
@@ -89,13 +89,13 @@ public class RequestService {
     }
 
     private void checkUser(Long userId) {
-        if(!userRepo.existsById(userId)) {
+        if (!userRepo.existsById(userId)) {
             throw new NotFoundException("User by id=" + userId + " was not found.");
         }
     }
 
     private void checkEvent(Long eventId) {
-        if(!eventRepo.existsById(eventId)) {
+        if (!eventRepo.existsById(eventId)) {
             throw new NotFoundException("Event by id=" + eventId + " was not found.");
         }
     }

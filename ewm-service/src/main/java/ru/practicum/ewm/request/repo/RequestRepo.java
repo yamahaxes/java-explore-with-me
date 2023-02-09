@@ -9,9 +9,9 @@ import java.util.Optional;
 
 public interface RequestRepo extends JpaRepository<Request, Long> {
 
-    List<Request> getRequestsByRequesterId(Long requester_id);
+    List<Request> getRequestsByRequesterId(Long requesterId);
 
-    Optional<Request> getRequestByIdIsAndRequesterId(Long id, Long requester_id);
+    Optional<Request> getRequestByIdIsAndRequesterId(Long id, Long requesterId);
 
     List<Request> getRequestsByEventIdAndEventInitiatorId(Long eventId, Long userId);
 
