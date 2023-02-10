@@ -65,20 +65,23 @@ public class EventControllerPub {
 
     private void sendStat(HttpServletRequest request) {
 
-        new Thread(() -> {
+        //new Thread(() -> {
             HitDtoRequest dto = new HitDtoRequest();
             dto.setApp("ewm-main-service");
             dto.setIp(request.getRemoteAddr());
             dto.setTimestamp(LocalDateTime.now());
             dto.setUri(request.getRequestURI());
-
-            ResponseEntity<Object> result = statsClient.createHit(dto);
-            if (result.getStatusCode() == HttpStatus.CREATED) {
-                log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
-            } else {
-                log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
+            try {
+                ResponseEntity<Object> result = statsClient.createHit(dto);
+                if (result.getStatusCode() == HttpStatus.CREATED) {
+                    log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
+                } else {
+                    log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
+                }
+            } catch (RuntimeException ex) {
+                log.info("Create hit error: " + ex.getMessage());
             }
-        }).start();
+        //}).start();
     }
 }
 

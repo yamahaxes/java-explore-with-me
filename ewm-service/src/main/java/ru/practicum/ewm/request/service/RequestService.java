@@ -49,9 +49,8 @@ public class RequestService {
             throw new ForbiddenException("Event by id=" + eventId + " was not published");
         }
 
-        if (event.getConfirmedRequests() >= event.getParticipantLimit()
-                && event.getParticipantLimit() != 0) {
-            throw new ForbiddenException("The event has reached its request limit");
+        if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
+            throw new ForbiddenException("Limit exhausted.");
         }
 
         Request newRequest = new Request();
@@ -59,13 +58,12 @@ public class RequestService {
         newRequest.setRequester(requester);
         newRequest.setEvent(event);
 
-        event.incConfirmedRequests();
-        eventRepo.save(event);
-
         if (event.getRequestModeration()) {
             newRequest.setStatus(RequestStatus.PENDING);
         } else {
             newRequest.setStatus(RequestStatus.CONFIRMED);
+            event.incConfirmedRequests();
+            eventRepo.save(event);
         }
 
         return requestMapper.toDto(requestRepo.save(newRequest));
@@ -78,12 +76,16 @@ public class RequestService {
         Request request = requestRepo.getRequestByIdIsAndRequesterId(requestId, userId)
                 .orElseThrow(() -> new NotFoundException("Request by id=" + requestId + " and user id=" + userId + " was not found."));
 
-        request.setStatus(RequestStatus.CANCELED);
-        requestRepo.save(request);
-
         Event event = request.getEvent();
         event.setConfirmedRequests(event.getConfirmedRequests() - 1);
-        eventRepo.save(event);
+
+        if (request.getStatus() == RequestStatus.CONFIRMED) {
+            event.decConfirmedRequests();
+            eventRepo.save(event);
+        }
+
+        request.setStatus(RequestStatus.CANCELED);
+        requestRepo.save(request);
 
         return requestMapper.toDto(request);
     }

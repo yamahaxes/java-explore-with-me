@@ -72,4 +72,12 @@ public class Event {
     public void incConfirmedRequests() {
         confirmedRequests++;
     }
+
+    public void decConfirmedRequests() {
+        confirmedRequests--;
+    }
+
+    public boolean limitExhausted() {
+        return confirmedRequests > participantLimit;
+    }
 }

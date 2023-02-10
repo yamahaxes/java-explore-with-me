@@ -212,7 +212,7 @@ public class EventService {
             return requestStatusUpdateResult;
         }
 
-        List<Request> requests = requestRepo.getRequestsByEventIdAndEventInitiatorId(eventId, userId);
+        List<Request> requests = requestRepo.getRequestsByEventIdAndEventInitiatorIdAndIdIn(eventId, userId, dto.getRequestIds());
         requests.forEach(request -> {
             if (!request.getStatus().equals(RequestStatus.PENDING)) {
                 throw new ForbiddenException("Request with id=" + request.getId() + " have not status PENDING.");
@@ -222,7 +222,7 @@ public class EventService {
             if (dto.getStatus() == RequestStatus.CONFIRMED) {
                 event.incConfirmedRequests();
 
-                if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
+                if (event.limitExhausted()) {
                     throw new ForbiddenException("Request limit exceeded");
                 }
             }
