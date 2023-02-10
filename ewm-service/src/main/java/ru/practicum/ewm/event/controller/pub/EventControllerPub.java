@@ -71,15 +71,12 @@ public class EventControllerPub {
             dto.setIp(request.getRemoteAddr());
             dto.setTimestamp(LocalDateTime.now());
             dto.setUri(request.getRequestURI());
-            try {
-                ResponseEntity<Object> result = statsClient.createHit(dto);
-                if (result.getStatusCode() == HttpStatus.CREATED) {
-                    log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
-                } else {
-                    log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
-                }
-            } catch (RuntimeException ex) {
-                log.info("Error send state: " + ex.getMessage());
+
+            ResponseEntity<Object> result = statsClient.createHit(dto);
+            if (result.getStatusCode() == HttpStatus.CREATED) {
+                log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
+            } else {
+                log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
             }
         }).start();
     }
