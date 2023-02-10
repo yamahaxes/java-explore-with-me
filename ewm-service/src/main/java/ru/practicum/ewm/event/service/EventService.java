@@ -57,11 +57,11 @@ public class EventService {
         Page page = new Page(from, size);
         Predicate predicate = predicates.buildAnd();
 
-        if (predicate == null) {
-            return eventMapper.toEventFullDtoList(eventRepo.findAll(page).toList());
-        }
-
-        return eventMapper.toEventFullDtoList(eventRepo.findAll(predicate, page).toList());
+        return eventMapper.toEventFullDtoList(
+                (predicate == null)
+                        ? eventRepo.findAll(page).toList()
+                        : eventRepo.findAll(predicate, page).toList()
+        );
     }
 
     public List<EventShortDto> getEvents(String text,
@@ -98,23 +98,23 @@ public class EventService {
         List<Predicate> predicatesAll = List.of(predicatesOr.buildOr(), predicatesAnd.buildAnd());
         Predicate predicate = ExpressionUtils.allOf(predicatesAll);
 
-        Page page = new Page(from, size);
 
+        Sort sort = Sort.unsorted();
         if (sortOptional.isPresent()) {
-            EventSort sort = sortOptional.get();
-            if (sort.equals(EventSort.VIEWS)) {
-                page = new Page(from, size, Sort.by("views"));
-            } else if (sort.equals(EventSort.EVENT_DATE)) {
-                page = new Page(from, size, Sort.by("eventDate"));
+            switch (sortOptional.get()) {
+                case EVENT_DATE:
+                    sort = Sort.by("eventDate"); break;
+                case VIEWS:
+                    sort = Sort.by("views"); break;
             }
         }
 
-        if (predicate == null) {
-            return eventMapper.toEventShortDtoList(eventRepo.findAll(page).toList());
-        }
+        Page page = new Page(from, size, sort);
 
         return eventMapper.toEventShortDtoList(
-                eventRepo.findAll(predicate, page).toList()
+                (predicate == null)
+                        ? eventRepo.findAll(page).toList()
+                        : eventRepo.findAll(predicate, page).toList()
         );
 
     }

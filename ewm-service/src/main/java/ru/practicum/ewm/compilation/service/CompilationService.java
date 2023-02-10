@@ -58,11 +58,11 @@ public class CompilationService {
         Predicate predicate = predicates.buildAnd();
         Page page = new Page(from, size);
 
-        List<Compilation> compilations = predicate == null ?
-                compilationRepo.findAll(page).toList() :
-                compilationRepo.findAll(predicate, page).toList();
-
-        return compilationMapper.toDtoList(compilations);
+        return compilationMapper.toDtoList(
+                (predicate == null)
+                        ? compilationRepo.findAll(page).toList()
+                        : compilationRepo.findAll(predicate, page).toList()
+        );
     }
 
     public CompilationDto getCompilation(Long compId) {
