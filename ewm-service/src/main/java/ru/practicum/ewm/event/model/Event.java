@@ -80,4 +80,8 @@ public class Event {
     public boolean limitExhausted() {
         return confirmedRequests > participantLimit;
     }
+
+    public boolean addRequestAvailable() {
+        return confirmedRequests < participantLimit;
+    }
 }

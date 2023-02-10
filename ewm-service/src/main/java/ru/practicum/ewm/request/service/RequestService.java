@@ -49,7 +49,7 @@ public class RequestService {
             throw new ForbiddenException("Event by id=" + eventId + " was not published");
         }
 
-        if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
+        if (!event.addRequestAvailable()) {
             throw new ForbiddenException("Limit exhausted.");
         }
 
