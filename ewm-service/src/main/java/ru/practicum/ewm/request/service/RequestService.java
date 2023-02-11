@@ -21,6 +21,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class RequestService {
 
     private final RequestRepo requestRepo;
@@ -28,11 +29,11 @@ public class RequestService {
     private final UserRepo userRepo;
     private final EventRepo eventRepo;
 
+    @Transactional(readOnly = true)
     public List<RequestDto> getRequests(Long userId) {
         return requestMapper.toDtoList(requestRepo.getRequestsByRequesterId(userId));
     }
 
-    @Transactional
     public RequestDto createRequest(Long userId, Long eventId) {
 
         checkUser(userId);
@@ -69,7 +70,6 @@ public class RequestService {
         return requestMapper.toDto(requestRepo.save(newRequest));
     }
 
-    @Transactional
     public RequestDto cancelRequest(Long userId, Long requestId) {
         checkUser(userId);
 

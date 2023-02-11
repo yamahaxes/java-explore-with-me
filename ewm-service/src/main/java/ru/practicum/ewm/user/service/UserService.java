@@ -3,6 +3,7 @@ package ru.practicum.ewm.user.service;
 import com.querydsl.core.types.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.dto.UserDtoNew;
@@ -18,11 +19,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserService {
 
     private final UserRepo userRepo;
     private final UserMapper userMapper;
 
+    @Transactional(readOnly = true)
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
         QPredicates predicates = QPredicates.builder()
                 .add(ids, QUser.user.id::in);

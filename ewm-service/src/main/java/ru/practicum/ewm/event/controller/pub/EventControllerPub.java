@@ -4,14 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.service.EventService;
-import ru.practicum.ewm.stats.client.StatsClient;
-import ru.practicum.ewm.stats.dto.HitDtoRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Positive;
@@ -27,7 +24,6 @@ import java.util.Optional;
 public class EventControllerPub {
 
     private final EventService eventService;
-    private final StatsClient statsClient;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
@@ -46,10 +42,8 @@ public class EventControllerPub {
                 "onlyAvailable={},\nsort={},\nfrom={}, size={}",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
 
-        sendStat(request);
-
         return eventService.getEvents(text, categories, paid, rangeStart, rangeEnd,
-                onlyAvailable, sort, from, size);
+                onlyAvailable, sort, from, size, request);
     }
 
     @GetMapping("/{id}")
@@ -57,31 +51,9 @@ public class EventControllerPub {
     public EventFullDto getEvent(@Positive @PathVariable Long id,
                                  HttpServletRequest request) {
         log.info("GET getEvent(): id={}", id);
-        sendStat(request);
 
-        return eventService.getEvent(id);
+        return eventService.getEvent(id, request);
     }
 
-
-    private void sendStat(HttpServletRequest request) {
-
-        //new Thread(() -> {
-            HitDtoRequest dto = new HitDtoRequest();
-            dto.setApp("ewm-main-service");
-            dto.setIp(request.getRemoteAddr());
-            dto.setTimestamp(LocalDateTime.now());
-            dto.setUri(request.getRequestURI());
-            try {
-                ResponseEntity<Object> result = statsClient.createHit(dto);
-                if (result.getStatusCode() == HttpStatus.CREATED) {
-                    log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
-                } else {
-                    log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
-                }
-            } catch (RuntimeException ex) {
-                log.info("Create hit error: " + ex.getMessage());
-            }
-        //}).start();
-    }
 }
 

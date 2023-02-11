@@ -1,12 +1,16 @@
 package ru.practicum.ewm.compilation.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@NoArgsConstructor
+@Setter
+@Getter
 public class NewCompilationDto {
 
     private Set<Long> events = new HashSet<>();

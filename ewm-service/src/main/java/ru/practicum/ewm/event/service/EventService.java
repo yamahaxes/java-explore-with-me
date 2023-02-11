@@ -4,7 +4,10 @@ import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.event.controller.pub.EventSort;
@@ -20,17 +23,22 @@ import ru.practicum.ewm.request.dto.RequestStatus;
 import ru.practicum.ewm.request.mapper.RequestMapper;
 import ru.practicum.ewm.request.model.Request;
 import ru.practicum.ewm.request.repo.RequestRepo;
+import ru.practicum.ewm.stats.client.StatsClient;
+import ru.practicum.ewm.stats.dto.HitDtoRequest;
 import ru.practicum.ewm.user.repo.UserRepo;
 import ru.practicum.ewm.util.EwmUtils;
 import ru.practicum.ewm.util.Page;
 import ru.practicum.ewm.util.QPredicates;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class EventService {
 
     private final EventRepo eventRepo;
@@ -38,7 +46,9 @@ public class EventService {
     private final UserRepo userRepo;
     private final RequestRepo requestRepo;
     private final RequestMapper requestMapper;
+    private final StatsClient statsClient;
 
+    @Transactional(readOnly = true)
     public List<EventFullDto> getEvents(List<Long> users,
                                         List<EventState> states,
                                         List<Long> categories,
@@ -64,6 +74,7 @@ public class EventService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<EventShortDto> getEvents(String text,
                                          List<Long> categories,
                                          Boolean paid,
@@ -72,7 +83,10 @@ public class EventService {
                                          Boolean onlyAvailable,
                                          Optional<EventSort> sortOptional,
                                          Integer from,
-                                         Integer size) {
+                                         Integer size,
+                                         HttpServletRequest request) {
+
+        sendStat(request);
 
         QPredicates predicatesOr = QPredicates.builder()
                 .add(text, QEvent.event.description::containsIgnoreCase)
@@ -120,6 +134,7 @@ public class EventService {
     }
 
     public EventFullDto updateEvent(Long eventId, EventDtoUpdateAdmin dto) {
+        validateEventTime(dto.getEventDate(), 1);
         checkEvent(eventId);
 
         Event entityTarget = eventRepo.getReferenceById(eventId);
@@ -134,12 +149,15 @@ public class EventService {
         );
     }
 
-    public EventFullDto getEvent(Long id) {
+    @Transactional(readOnly = true)
+    public EventFullDto getEvent(Long id, HttpServletRequest request) {
+        sendStat(request);
         checkEvent(id);
 
         return eventMapper.toEventFullDto(eventRepo.getEventByIdAndState(id, EventState.PUBLISHED));
     }
 
+    @Transactional(readOnly = true)
     public List<EventShortDto> getEvents(Long userId, Integer from, Integer size) {
         checkUser(userId);
 
@@ -149,6 +167,7 @@ public class EventService {
     }
 
     public EventFullDto createEvent(Long userId, EventNewDto dto) {
+        validateEventTime(dto.getEventDate(), 2);
         checkUser(userId);
 
         Event event = eventMapper.toModel(dto);
@@ -160,6 +179,7 @@ public class EventService {
         return eventMapper.toEventFullDto(eventRepo.save(event));
     }
 
+    @Transactional(readOnly = true)
     public EventFullDto getEvent(Long userId, Long eventId) {
 
         Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(eventId, userId);
@@ -171,6 +191,10 @@ public class EventService {
     }
 
     public EventFullDto updateEvent(Long userId, Long eventId, EventDtoUpdateUser dto) {
+
+        if (dto.getEventDate() != null) {
+            validateEventTime(dto.getEventDate(), 2);
+        }
 
         Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(eventId, userId);
         Event eventTarget = optionalEvent
@@ -190,13 +214,13 @@ public class EventService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<RequestDto> getRequests(Long userId, Long eventId) {
         return requestMapper.toDtoList(
                 requestRepo.getRequestsByEventIdAndEventInitiatorId(eventId, userId)
         );
     }
 
-    @Transactional
     public RequestStatusUpdateResult updateRequestsStatus(Long userId, Long eventId, RequestStatusUpdate dto) {
 
         checkUser(userId);
@@ -278,5 +302,37 @@ public class EventService {
         if (!eventRepo.existsById(eventId)) {
             throw new NotFoundException("Event by id=" + eventId + " was not found.");
         }
+    }
+
+    private void validateEventTime(LocalDateTime dateTime, int hours) {
+        if (dateTime == null) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.plusHours(hours).isAfter(dateTime)) {
+            throw new ForbiddenException("Must contain a date that has not yet arrived.");
+        }
+    }
+
+    private void sendStat(HttpServletRequest request) {
+
+        new Thread(() -> {
+            HitDtoRequest dto = new HitDtoRequest();
+            dto.setApp("ewm-main-service");
+            dto.setIp(request.getRemoteAddr());
+            dto.setTimestamp(LocalDateTime.now());
+            dto.setUri(request.getRequestURI());
+            try {
+                ResponseEntity<Object> result = statsClient.createHit(dto);
+                if (result.getStatusCode() == HttpStatus.CREATED) {
+                    log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
+                } else {
+                    log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
+                }
+            } catch (RuntimeException ex) {
+                log.info("Create hit error: " + ex.getMessage());
+            }
+        }).start();
     }
 }

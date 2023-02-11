@@ -1,11 +1,15 @@
 package ru.practicum.ewm.compilation.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import ru.practicum.ewm.event.dto.EventShortDto;
 
 import java.util.Set;
 
-@Data
+@NoArgsConstructor
+@Getter
+@Setter
 public class CompilationDto {
 
     private Long id;

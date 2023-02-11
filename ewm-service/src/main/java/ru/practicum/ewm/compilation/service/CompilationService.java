@@ -3,6 +3,7 @@ package ru.practicum.ewm.compilation.service;
 import com.querydsl.core.types.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.compilation.dto.CompilationDto;
 import ru.practicum.ewm.compilation.dto.NewCompilationDto;
 import ru.practicum.ewm.compilation.dto.UpdateCompilationDto;
@@ -19,6 +20,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CompilationService {
 
     private final CompilationMapper compilationMapper;
@@ -50,6 +52,7 @@ public class CompilationService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
 
         QPredicates predicates = QPredicates.builder()
@@ -65,6 +68,7 @@ public class CompilationService {
         );
     }
 
+    @Transactional(readOnly = true)
     public CompilationDto getCompilation(Long compId) {
         checkCompilation(compId);
         return compilationMapper.toDto(

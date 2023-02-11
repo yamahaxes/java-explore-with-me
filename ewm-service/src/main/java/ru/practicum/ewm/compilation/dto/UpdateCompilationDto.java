@@ -1,10 +1,14 @@
 package ru.practicum.ewm.compilation.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Set;
 
-@Data
+@NoArgsConstructor
+@Getter
+@Setter
 public class UpdateCompilationDto {
 
     private Set<Long> events;

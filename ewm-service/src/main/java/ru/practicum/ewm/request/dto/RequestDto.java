@@ -1,11 +1,15 @@
 package ru.practicum.ewm.request.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Data
+@NoArgsConstructor
+@Getter
+@Setter
 public class RequestDto {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

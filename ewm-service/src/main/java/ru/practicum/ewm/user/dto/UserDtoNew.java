@@ -1,11 +1,15 @@
 package ru.practicum.ewm.user.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
-@Data
+@NoArgsConstructor
+@Getter
+@Setter
 public class UserDtoNew {
 
     @NotBlank

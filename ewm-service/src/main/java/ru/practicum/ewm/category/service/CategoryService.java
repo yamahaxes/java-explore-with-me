@@ -2,6 +2,7 @@ package ru.practicum.ewm.category.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.category.dto.CategoryDtoNew;
 import ru.practicum.ewm.category.mapper.CategoryMapper;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CategoryService {
 
     private final CategoryRepo categoryRepo;
@@ -41,6 +43,7 @@ public class CategoryService {
         return categoryMapper.toCategoryDto(entity);
     }
 
+    @Transactional(readOnly = true)
     public List<CategoryDto> getCategories(Integer from, Integer size) {
         return categoryRepo.findAll(new Page(from, size))
                 .toList().stream()
@@ -48,6 +51,7 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public CategoryDto getCategory(Long catId) {
         checkCategory(catId);
         return categoryMapper.toCategoryDto(categoryRepo.getReferenceById(catId));

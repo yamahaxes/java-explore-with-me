@@ -8,14 +8,12 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.service.EventService;
 import ru.practicum.ewm.exception.BadRequestException;
-import ru.practicum.ewm.exception.ForbiddenException;
 import ru.practicum.ewm.request.dto.RequestDto;
 import ru.practicum.ewm.request.dto.RequestStatus;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -42,7 +40,6 @@ public class EventControllerPvt {
                                     @Valid @RequestBody EventNewDto dto) {
 
         log.info("POST createEvent(): userId={}, dto={}", userId, dto);
-        validateEventTime(dto.getEventDate());
 
         return eventService.createEvent(userId, dto);
     }
@@ -61,10 +58,6 @@ public class EventControllerPvt {
     public EventFullDto updateEvent(@Positive @PathVariable Long userId,
                                     @Positive @PathVariable Long eventId,
                                     @Valid @RequestBody EventDtoUpdateUser dto) {
-
-        if (dto.getEventDate() != null) {
-            validateEventTime(dto.getEventDate());
-        }
 
         return eventService.updateEvent(userId, eventId, dto);
     }
@@ -93,14 +86,4 @@ public class EventControllerPvt {
         return eventService.updateRequestsStatus(userId, eventId, dto);
     }
 
-    private void validateEventTime(LocalDateTime dateTime) {
-        if (dateTime == null) {
-            return;
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        if (now.plusHours(2).isAfter(dateTime)) {
-            throw new ForbiddenException("Must contain a date that has not yet arrived.");
-        }
-    }
 }
