@@ -317,7 +317,7 @@ public class EventService {
 
     private void sendStat(HttpServletRequest request) {
 
-        new Thread(() -> {
+        //new Thread(() -> {
             HitDtoRequest dto = new HitDtoRequest();
             dto.setApp("ewm-main-service");
             dto.setIp(request.getRemoteAddr());
@@ -333,6 +333,6 @@ public class EventService {
             } catch (RuntimeException ex) {
                 log.info("Create hit error: " + ex.getMessage());
             }
-        }).start();
+        //}).start();
     }
 }
