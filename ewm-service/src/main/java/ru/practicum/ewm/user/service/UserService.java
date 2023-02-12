@@ -49,10 +49,14 @@ public class UserService {
 
 
     public void deleteUser(Long userId) {
+        userRepo.delete(getUserOrThrow(userId));
+    }
+
+    public User getUserOrThrow(Long userId) {
         if (!userRepo.existsById(userId)) {
             throw new NotFoundException("User by id=" + userId + " was not found.");
         }
 
-        userRepo.deleteById(userId);
+        return userRepo.getReferenceById(userId);
     }
 }
