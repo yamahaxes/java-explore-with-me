@@ -4,6 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.mapper.EventMapper;
+import ru.practicum.ewm.event.model.Event;
+import ru.practicum.ewm.event.repo.EventRepo;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.subscription.dto.SubscriptionDto;
 import ru.practicum.ewm.subscription.model.Subscription;
@@ -12,6 +16,7 @@ import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.service.UserService;
 import ru.practicum.ewm.util.Page;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +28,8 @@ public class SubscriptionService {
     private final SubscriptionRepo repo;
     private final UserService userService;
     private final ModelMapper modelMapper;
+    private final EventRepo eventRepo;
+    private final EventMapper eventMapper;
 
     public void subscribe(Long userId, Long personId) {
         User user = userService.getUserOrThrow(userId);
@@ -45,12 +52,18 @@ public class SubscriptionService {
         repo.delete(subscription);
     }
 
+    @Transactional(readOnly = true)
     public List<SubscriptionDto> getSubscriptions(Long userId, Integer from, Integer size) {
-
         User user = userService.getUserOrThrow(userId);
+
         return repo.getSubscriptionsBySubscriber(user, new Page(from, size))
                 .stream().map(s -> modelMapper.map(s, SubscriptionDto.class))
                 .collect(Collectors.toList());
 
+    }
+
+    public List<EventShortDto> getActualEvents(Long userId) {
+        List<Event> events = eventRepo.getEventsBySubscription(userId, LocalDateTime.now());
+        return eventMapper.toEventShortDtoList(events);
     }
 }

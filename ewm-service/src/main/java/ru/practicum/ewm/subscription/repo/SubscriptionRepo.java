@@ -14,4 +14,5 @@ public interface SubscriptionRepo extends JpaRepository<Subscription, Long> {
     Optional<Subscription> getSubscriptionByIdAndSubscriber(Long id, User subscriber);
 
     List<SubscriptionDto>  getSubscriptionsBySubscriber(User subscriber, Pageable page);
+
 }

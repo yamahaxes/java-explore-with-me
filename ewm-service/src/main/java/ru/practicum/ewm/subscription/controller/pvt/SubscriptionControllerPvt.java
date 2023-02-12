@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.subscription.dto.SubscriptionDto;
 import ru.practicum.ewm.subscription.service.SubscriptionService;
 
@@ -47,4 +48,10 @@ public class SubscriptionControllerPvt {
         return subscriptionService.getSubscriptions(userId, from, size);
     }
 
+    @GetMapping("/events")
+    @ResponseStatus(HttpStatus.OK)
+    public List<EventShortDto> getActualEvents(@Positive @PathVariable Long userId) {
+        log.info("GET getActualEvents(): userId={}", userId);
+        return subscriptionService.getActualEvents(userId);
+    }
 }
