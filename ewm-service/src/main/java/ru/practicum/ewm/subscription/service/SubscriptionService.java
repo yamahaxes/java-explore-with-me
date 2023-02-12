@@ -8,6 +8,7 @@ import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.repo.EventRepo;
+import ru.practicum.ewm.exception.ForbiddenException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.subscription.dto.SubscriptionDto;
 import ru.practicum.ewm.subscription.model.Subscription;
@@ -32,8 +33,13 @@ public class SubscriptionService {
     private final EventMapper eventMapper;
 
     public void subscribe(Long userId, Long personId) {
-        User user = userService.getUserOrThrow(userId);
+
         User person = userService.getUserOrThrow(personId);
+        if (!person.getPrivacySubscription()) {
+            throw new ForbiddenException("The user with id=" + personId + " has disabled the ability to subscribe to him");
+        }
+
+        User user = userService.getUserOrThrow(userId);
 
         Subscription subscription = new Subscription();
         subscription.setSubscriber(user);

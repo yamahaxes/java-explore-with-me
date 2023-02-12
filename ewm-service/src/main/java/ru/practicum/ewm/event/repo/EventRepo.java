@@ -27,7 +27,7 @@ public interface EventRepo extends JpaRepository<Event, Long>,
     @Query("SELECT " +
             "e " +
             "FROM Event e " +
-            "WHERE e.initiator.id IN (SELECT s.person.id FROM Subscription s WHERE s.subscriber.id = ?1) " +
+            "WHERE e.initiator.id IN (SELECT s.person.id FROM Subscription s WHERE s.subscriber.id = ?1 AND s.person.privacySubscription = true ) " +
             "   AND e.state = ru.practicum.ewm.event.dto.EventState.PUBLISHED " +
             "   AND e.eventDate >= ?2")
     List<Event> getEventsBySubscription(Long userId, LocalDateTime onDateTime);

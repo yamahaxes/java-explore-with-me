@@ -22,4 +22,7 @@ public class User {
     @Column(nullable = false)
     private String email;
 
+    @Column(name = "privacy_subscription", nullable = false)
+    private Boolean privacySubscription;
+
 }

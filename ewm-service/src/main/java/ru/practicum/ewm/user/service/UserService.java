@@ -2,15 +2,17 @@ package ru.practicum.ewm.user.service;
 
 import com.querydsl.core.types.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.dto.UserDtoNew;
-import ru.practicum.ewm.user.mapper.UserMapper;
+import ru.practicum.ewm.user.dto.UserDtoPrivacy;
 import ru.practicum.ewm.user.model.QUser;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repo.UserRepo;
+import ru.practicum.ewm.util.EwmUtils;
 import ru.practicum.ewm.util.Page;
 import ru.practicum.ewm.util.QPredicates;
 
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepo userRepo;
-    private final UserMapper userMapper;
+    private final ModelMapper modelMapper;
 
     @Transactional(readOnly = true)
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
@@ -38,18 +40,29 @@ public class UserService {
                 userRepo.findAll(predicate, page).toList();
 
         return users.stream()
-                .map(userMapper::toUserDto)
+                .map(user -> modelMapper.map(user, UserDto.class))
                 .collect(Collectors.toList());
     }
 
     public UserDto createUser(UserDtoNew dto) {
-        User entity = userMapper.toModel(dto);
-        return userMapper.toUserDto(userRepo.save(entity));
+        User entity = modelMapper.map(dto, User.class);
+        entity.setPrivacySubscription(true);
+
+        return modelMapper.map(userRepo.save(entity), UserDto.class);
     }
 
 
     public void deleteUser(Long userId) {
         userRepo.delete(getUserOrThrow(userId));
+    }
+
+    public UserDtoPrivacy updateUserPrivacy(Long userId, UserDtoPrivacy dto) {
+
+        User src = modelMapper.map(dto, User.class);
+        User user = getUserOrThrow(userId);
+        EwmUtils.copyNotNullProperties(src, user);
+
+        return modelMapper.map(userRepo.save(user), UserDtoPrivacy.class);
     }
 
     public User getUserOrThrow(Long userId) {
@@ -59,4 +72,5 @@ public class UserService {
 
         return userRepo.getReferenceById(userId);
     }
+
 }
