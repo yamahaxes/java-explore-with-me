@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "da45f2f1-15b0-4a16-8472-3659ee216801",
+		"_postman_id": "683c5974-994a-4815-8eb4-a533d78d3caf",
 		"name": "Test Explore With Me - Subscription",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "23165072"
@@ -128,8 +128,8 @@
 									"    try {",
 									"        rndUser = rnd.getUser();",
 									"        const user = await api.addUser(rndUser);",
-									"        pm.collectionVariables.set(\"uid\", user.id);",
-									"        pm.collectionVariables.set(\"response\", user)",
+									"        pm.collectionVariables.set(\"uid_1\", user.id);",
+									"        pm.collectionVariables.set(\"response_1\", user)",
 									"    } catch(err) {",
 									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);",
 									"    }",
@@ -171,7 +171,7 @@
 									"    pm.response.to.be.json;",
 									"});",
 									"",
-									"const source = pm.collectionVariables.get('response');",
+									"const source = pm.collectionVariables.get('response_1');",
 									"const target = pm.response.json();",
 									"",
 									"pm.test(\"Подборка должны содержать поля: id, privacySubscription\", function () {",
@@ -179,9 +179,9 @@
 									"});",
 									"",
 									"pm.test(\"Данные должны измениться.\", function () {",
-									"    pm.expect(source.privacySubscription).eq(true, \"privacySubscription начальные данные должны быть true\")",
+									"    pm.expect(source.privacySubscription).equal(true, \"privacySubscription начальные данные должны быть true\")",
 									"    //pm.expect(source.privacySubscription).(target.privacySubscription, 'Свойство privacySubscription должно быть изменено')",
-									"    pm.expect(target.privacySubscription).eq(false, 'privacySubscription должно быть false')",
+									"    pm.expect(target.privacySubscription).equal(false, 'privacySubscription должно быть false')",
 									"});"
 								],
 								"type": "text/javascript"
@@ -213,7 +213,7 @@
 							"variable": [
 								{
 									"key": "userId",
-									"value": "{{uid}}",
+									"value": "{{uid_1}}",
 									"description": "User id"
 								}
 							]
@@ -238,8 +238,8 @@
 							"        user1 = await api.addUser(rnd.getUser());",
 							"        user2 = await api.addUser(rnd.getUser());",
 							"",
-							"        pm.collectionVariables.set(\"uid\", user1.id);",
-							"        pm.collectionVariables.set(\"uid2\", user2.id);",
+							"        pm.collectionVariables.set(\"uid_2\", user1.id);",
+							"        pm.collectionVariables.set(\"uid2_2\", user2.id);",
 							"    } catch(err) {",
 							"        console.error(\"Ошибка при подготовке тестовых данных.\", err);",
 							"    }",
@@ -281,8 +281,8 @@
 							"",
 							"pm.test(\"Данные в ответе должны соответствовать данным в запросе\", function () {",
 							"    pm.expect(target.id).to.not.be.null;",
-							"    pm.expect(target.subscriber.id).equal(pm.collectionVariables.get('uid'));",
-							"    pm.expect(target.person.id).equal(pm.collectionVariables.get('uid2'));",
+							"    pm.expect(target.subscriber.id).equal(pm.collectionVariables.get('uid_2'));",
+							"    pm.expect(target.person.id).equal(pm.collectionVariables.get('uid2_2'));",
 							"});"
 						],
 						"type": "text/javascript"
@@ -293,7 +293,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "{{baseUrl}}/users/:userId/subscriptions?personId={{uid2}}",
+					"raw": "{{baseUrl}}/users/:userId/subscriptions?personId={{uid2_2}}",
 					"host": [
 						"{{baseUrl}}"
 					],
@@ -305,13 +305,13 @@
 					"query": [
 						{
 							"key": "personId",
-							"value": "{{uid2}}"
+							"value": "{{uid2_2}}"
 						}
 					],
 					"variable": [
 						{
 							"key": "userId",
-							"value": "{{uid}}"
+							"value": "{{uid_2}}"
 						}
 					]
 				}
@@ -603,8 +603,8 @@
 							"        user1 = await api.addUser(rnd.getUser());",
 							"        user2 = await api.addUser(rnd.getUser());",
 							"",
-							"        pm.collectionVariables.set(\"uid\", user1.id);",
-							"        pm.collectionVariables.set(\"uid2\", user2.id);",
+							"        pm.collectionVariables.set(\"uid_3\", user1.id);",
+							"        pm.collectionVariables.set(\"uid2_3\", user2.id);",
 							"",
 							"        subscription = await api.addSubscription(user1.id, user2.id);",
 							"        pm.collectionVariables.set(\"subscriptionId\", subscription.id);",
@@ -650,8 +650,8 @@
 							"});",
 							"",
 							"pm.test(\"id подписчика и id персоны должны совпадать.\", function() {",
-							"    pm.expect(target.subscriber.id).equal(pm.collectionVariables.get('uid'));",
-							"    pm.expect(target.person.id).equal(pm.collectionVariables.get('uid2'));",
+							"    pm.expect(target.subscriber.id).equal(pm.collectionVariables.get('uid_3'));",
+							"    pm.expect(target.person.id).equal(pm.collectionVariables.get('uid2_3'));",
 							"});"
 						],
 						"type": "text/javascript"
@@ -675,7 +675,7 @@
 					"variable": [
 						{
 							"key": "userId",
-							"value": "{{uid}}"
+							"value": "{{uid_3}}"
 						},
 						{
 							"key": "subscriptionId",
@@ -960,6 +960,30 @@
 			"key": "subscriptionId",
 			"value": "1",
 			"type": "string"
+		},
+		{
+			"key": "uid_1",
+			"value": ""
+		},
+		{
+			"key": "response_1",
+			"value": ""
+		},
+		{
+			"key": "uid_2",
+			"value": ""
+		},
+		{
+			"key": "uid2_2",
+			"value": ""
+		},
+		{
+			"key": "uid_3",
+			"value": ""
+		},
+		{
+			"key": "uid2_3",
+			"value": ""
 		}
 	]
 }
