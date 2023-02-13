@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.dto.UserDtoNew;
-import ru.practicum.ewm.user.dto.UserDtoPrivacy;
+import ru.practicum.ewm.user.dto.UserDtoUpdate;
 import ru.practicum.ewm.user.model.QUser;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repo.UserRepo;
@@ -46,7 +46,6 @@ public class UserService {
 
     public UserDto createUser(UserDtoNew dto) {
         User entity = modelMapper.map(dto, User.class);
-        entity.setPrivacySubscription(true);
 
         return modelMapper.map(userRepo.save(entity), UserDto.class);
     }
@@ -56,13 +55,15 @@ public class UserService {
         userRepo.delete(getUserOrThrow(userId));
     }
 
-    public UserDtoPrivacy updateUserPrivacy(Long userId, UserDtoPrivacy dto) {
 
-        User src = modelMapper.map(dto, User.class);
+    public UserDto update(Long userId, UserDtoUpdate dto) {
         User user = getUserOrThrow(userId);
-        EwmUtils.copyNotNullProperties(src, user);
+        User updated = modelMapper.map(dto, User.class);
 
-        return modelMapper.map(userRepo.save(user), UserDtoPrivacy.class);
+        EwmUtils.copyNotNullProperties(updated, user);
+
+        return modelMapper.map(userRepo.save(user), UserDto.class);
+
     }
 
     public User getUserOrThrow(Long userId) {
@@ -72,5 +73,4 @@ public class UserService {
 
         return userRepo.getReferenceById(userId);
     }
-
 }

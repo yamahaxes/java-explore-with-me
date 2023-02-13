@@ -21,12 +21,20 @@ public class SubscriptionControllerPvt {
 
     private final SubscriptionService subscriptionService;
 
-    @PostMapping
+    @GetMapping("/{subscriptionId}")
     @ResponseStatus(HttpStatus.OK)
-    public void subscribe(@Positive @PathVariable Long userId,
+    public SubscriptionDto getSubscription(@Positive @PathVariable Long userId,
+                                           @Positive @PathVariable Long subscriptionId) {
+        log.info("GET getSubscription(): userId={}, subscriptionId={}", userId, subscriptionId);
+        return subscriptionService.getSubscription(userId, subscriptionId);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public SubscriptionDto subscribe(@Positive @PathVariable Long userId,
                           @Positive @RequestParam Long personId) {
         log.info("POST subscribe(): userId={}, personId={}", userId, personId);
-        subscriptionService.subscribe(userId, personId);
+        return subscriptionService.subscribe(userId, personId);
     }
 
     @DeleteMapping("/{subscriptionId}")

@@ -32,7 +32,7 @@ public class SubscriptionService {
     private final EventRepo eventRepo;
     private final EventMapper eventMapper;
 
-    public void subscribe(Long userId, Long personId) {
+    public SubscriptionDto subscribe(Long userId, Long personId) {
 
         User person = userService.getUserOrThrow(personId);
         if (!person.getPrivacySubscription()) {
@@ -45,15 +45,13 @@ public class SubscriptionService {
         subscription.setSubscriber(user);
         subscription.setPerson(person);
 
-        repo.save(subscription);
+        return modelMapper.map(repo.save(subscription), SubscriptionDto.class);
     }
 
 
     public void unsubscribe(Long userId, Long subscriptionId) {
         User user = userService.getUserOrThrow(userId);
-        Subscription subscription = repo.getSubscriptionByIdAndSubscriber(subscriptionId, user)
-                .orElseThrow(() -> new NotFoundException("Subscription by id=" + subscriptionId + " and userId=" + user + " " +
-                        "was not found."));
+        Subscription subscription = getOrThrow(user, subscriptionId);
 
         repo.delete(subscription);
     }
@@ -71,5 +69,16 @@ public class SubscriptionService {
     public List<EventShortDto> getActualEvents(Long userId) {
         List<Event> events = eventRepo.getEventsBySubscription(userId, LocalDateTime.now());
         return eventMapper.toEventShortDtoList(events);
+    }
+
+    public SubscriptionDto getSubscription(Long userId, Long subscriptionId) {
+        User user = userService.getUserOrThrow(userId);
+        return modelMapper.map(getOrThrow(user, subscriptionId), SubscriptionDto.class);
+    }
+
+    public Subscription getOrThrow(User user, Long subscriptionId) {
+        return repo.getSubscriptionByIdAndSubscriber(subscriptionId, user)
+                .orElseThrow(() -> new NotFoundException("Subscription by id=" + subscriptionId + " and userId=" + user + " " +
+                        "was not found."));
     }
 }
