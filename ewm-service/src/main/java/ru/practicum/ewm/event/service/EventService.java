@@ -26,7 +26,6 @@ import ru.practicum.ewm.request.repo.RequestRepo;
 import ru.practicum.ewm.stats.client.StatsClient;
 import ru.practicum.ewm.stats.dto.HitDtoRequest;
 import ru.practicum.ewm.user.repo.UserRepo;
-import ru.practicum.ewm.util.EwmUtils;
 import ru.practicum.ewm.util.Page;
 import ru.practicum.ewm.util.QPredicates;
 
@@ -141,9 +140,7 @@ public class EventService {
         checkEvent(eventId);
 
         Event entityTarget = eventRepo.getReferenceById(eventId);
-        Event src = eventMapper.toModel(dto);
-
-        EwmUtils.copyNotNullProperties(src, entityTarget);
+        eventMapper.updateModel(entityTarget, dto);
 
         doEventAction(entityTarget, dto.getStateAction());
 
@@ -207,9 +204,7 @@ public class EventService {
             throw new ForbiddenException("Event by id=" + eventId + " already published.");
         }
 
-        Event src = eventMapper.toModel(dto);
-        EwmUtils.copyNotNullProperties(src, eventTarget);
-
+        eventMapper.updateModel(eventTarget, dto);
         doEventAction(eventTarget, dto.getStateAction());
 
         return eventMapper.toEventFullDto(

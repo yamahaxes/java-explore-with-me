@@ -12,7 +12,6 @@ import ru.practicum.ewm.user.dto.UserDtoUpdate;
 import ru.practicum.ewm.user.model.QUser;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repo.UserRepo;
-import ru.practicum.ewm.util.EwmUtils;
 import ru.practicum.ewm.util.Page;
 import ru.practicum.ewm.util.QPredicates;
 
@@ -58,9 +57,7 @@ public class UserService {
 
     public UserDto update(Long userId, UserDtoUpdate dto) {
         User user = getUserOrThrow(userId);
-        User updated = modelMapper.map(dto, User.class);
-
-        EwmUtils.copyNotNullProperties(updated, user);
+        modelMapper.map(dto, user);
 
         return modelMapper.map(userRepo.save(user), UserDto.class);
 
