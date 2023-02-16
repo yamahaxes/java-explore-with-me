@@ -81,7 +81,7 @@ public class EventService {
                                          LocalDateTime rangeStart,
                                          LocalDateTime rangeEnd,
                                          Boolean onlyAvailable,
-                                         Optional<EventSort> sortOptional,
+                                         EventSort eventSort,
                                          Integer from,
                                          Integer size,
                                          HttpServletRequest request) {
@@ -112,15 +112,18 @@ public class EventService {
         List<Predicate> predicatesAll = List.of(predicatesOr.buildOr(), predicatesAnd.buildAnd());
         Predicate predicate = ExpressionUtils.allOf(predicatesAll);
 
-
-        Sort sort = Sort.unsorted();
-        if (sortOptional.isPresent()) {
-            switch (sortOptional.get()) {
+        Sort sort;
+        if (eventSort != null) {
+            switch (eventSort) {
                 case EVENT_DATE:
                     sort = Sort.by("eventDate"); break;
                 case VIEWS:
                     sort = Sort.by("views"); break;
+                default:
+                    sort = Sort.unsorted();
             }
+        } else {
+            sort = Sort.unsorted();
         }
 
         Page page = new Page(from, size, sort);
@@ -317,22 +320,20 @@ public class EventService {
 
     private void sendStat(HttpServletRequest request) {
 
-        //new Thread(() -> {
-            HitDtoRequest dto = new HitDtoRequest();
-            dto.setApp("ewm-main-service");
-            dto.setIp(request.getRemoteAddr());
-            dto.setTimestamp(LocalDateTime.now());
-            dto.setUri(request.getRequestURI());
-            try {
-                ResponseEntity<Object> result = statsClient.createHit(dto);
-                if (result.getStatusCode() == HttpStatus.CREATED) {
-                    log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
-                } else {
-                    log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
-                }
-            } catch (RuntimeException ex) {
-                log.info("Create hit error: " + ex.getMessage());
+        HitDtoRequest dto = new HitDtoRequest();
+        dto.setApp("ewm-main-service");
+        dto.setIp(request.getRemoteAddr());
+        dto.setTimestamp(LocalDateTime.now());
+        dto.setUri(request.getRequestURI());
+        try {
+            ResponseEntity<Object> result = statsClient.createHit(dto);
+            if (result.getStatusCode() == HttpStatus.CREATED) {
+                log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
+            } else {
+                log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
             }
-        //}).start();
+        } catch (RuntimeException ex) {
+            log.info("Create hit error: " + ex.getMessage());
+        }
     }
 }

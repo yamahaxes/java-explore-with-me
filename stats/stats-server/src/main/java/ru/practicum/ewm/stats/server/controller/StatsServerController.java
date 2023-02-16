@@ -30,12 +30,14 @@ public class StatsServerController {
     @GetMapping("/stats")
     public ResponseEntity<List<HitDtoResponse>> getStats(@RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
                                                          @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
-                                                         @RequestParam(required = false) Optional<List<String>> uris,
+                                                         @RequestParam(required = false) List<String> uris,
                                                          @RequestParam(defaultValue = "false") boolean unique) {
 
         log.info("GET getStats(): start={}, end={}, uris={}, unique={}", start, end, uris, unique);
+
+        Optional<List<String>> urisOptional = Optional.of(uris);
         return
-                uris.map(strings -> new ResponseEntity<>(statsServerService.getStats(start, end, strings, unique), HttpStatus.OK))
+                urisOptional.map(strings -> new ResponseEntity<>(statsServerService.getStats(start, end, strings, unique), HttpStatus.OK))
                         .orElseGet(() -> new ResponseEntity<>(statsServerService.getStats(start, end, unique), HttpStatus.OK));
 
     }

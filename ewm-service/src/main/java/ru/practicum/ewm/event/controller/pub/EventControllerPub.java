@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Positive;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -33,7 +32,7 @@ public class EventControllerPub {
                                          @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") @RequestParam(required = false) LocalDateTime rangeStart,
                                          @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") @RequestParam(required = false) LocalDateTime rangeEnd,
                                          @RequestParam(required = false) Boolean onlyAvailable,
-                                         @RequestParam(required = false) Optional<EventSort> sort,
+                                         @RequestParam(required = false) EventSort sort,
                                          @RequestParam(defaultValue = "0") Integer from,
                                          @RequestParam(defaultValue = "10") Integer size,
                                          HttpServletRequest request) {

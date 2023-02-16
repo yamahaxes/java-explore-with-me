@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class StatsClient extends BaseClient {
 
@@ -29,7 +28,7 @@ public class StatsClient extends BaseClient {
 
     public ResponseEntity<Object> getStats(LocalDateTime start,
                                            LocalDateTime end,
-                                           Optional<List<String>> uri,
+                                           List<String> uri,
                                            boolean unique) {
 
         String path;
@@ -37,11 +36,11 @@ public class StatsClient extends BaseClient {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        if (uri.isPresent()) {
+        if (uri != null) {
             parameters = Map.of(
                     "start", start.format(formatter),
                     "end", end.format(formatter),
-                    "uri", uri.get(),
+                    "uri", uri,
                     "unique", unique
             );
 
