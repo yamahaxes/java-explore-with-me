@@ -16,6 +16,7 @@ import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.repo.EventRepo;
+import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.ForbiddenException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.request.dto.RequestDto;
@@ -119,7 +120,7 @@ public class EventService {
                 case VIEWS:
                     sort = Sort.by("views"); break;
                 default:
-                    sort = Sort.unsorted();
+                    throw new BadRequestException("Unsupported sort");
             }
         } else {
             sort = Sort.unsorted();
@@ -154,7 +155,12 @@ public class EventService {
         sendStat(request);
         checkEvent(id);
 
-        return eventMapper.toEventFullDto(eventRepo.getEventByIdAndState(id, EventState.PUBLISHED));
+        Event event = eventRepo.getEventByIdAndState(id, EventState.PUBLISHED);
+        Integer views = event.getViews() + 1;
+        event.setViews(views);
+        eventRepo.save(event);
+
+        return eventMapper.toEventFullDto(event);
     }
 
     @Transactional(readOnly = true)
@@ -315,20 +321,28 @@ public class EventService {
 
     private void sendStat(HttpServletRequest request) {
 
+        String APP_NAME = "ewm-main-service";
+
         HitDtoRequest dto = new HitDtoRequest();
-        dto.setApp("ewm-main-service");
+        dto.setApp(APP_NAME);
         dto.setIp(request.getRemoteAddr());
         dto.setTimestamp(LocalDateTime.now());
         dto.setUri(request.getRequestURI());
-        try {
-            ResponseEntity<Object> result = statsClient.createHit(dto);
-            if (result.getStatusCode() == HttpStatus.CREATED) {
-                log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
-            } else {
-                log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
+
+        final int numOfAttempts = 3;
+        for (int i = 0; i < numOfAttempts; i++) {
+            try {
+                ResponseEntity<Object> result = statsClient.createHit(dto);
+                if (result.getStatusCode() == HttpStatus.CREATED) {
+                    log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
+                    break;
+                } else {
+                    log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
+                }
+            } catch (RuntimeException ex) {
+                log.info("Create hit error: " + ex.getMessage());
             }
-        } catch (RuntimeException ex) {
-            log.info("Create hit error: " + ex.getMessage());
         }
     }
+
 }
