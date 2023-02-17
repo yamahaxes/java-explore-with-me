@@ -28,18 +28,16 @@ public class CompilationMapper {
 
     public Compilation toModel(NewCompilationDto dto) {
         Compilation compilation = modelMapper.map(dto, Compilation.class);
-
         compilation.setEvents(eventRepo.getEventsByIdIn(dto.getEvents()));
 
         return compilation;
     }
 
-    public Compilation toModel(UpdateCompilationDto dto) {
-        Compilation compilation = modelMapper.map(dto, Compilation.class);
-
-        compilation.setEvents(eventRepo.getEventsByIdIn(dto.getEvents()));
-
-        return compilation;
+    public void updateModel(Compilation compilation, UpdateCompilationDto dto) {
+        modelMapper.map(dto, compilation);
+        if (dto.getEvents() != null) {
+            compilation.setEvents(eventRepo.getEventsByIdIn(dto.getEvents()));
+        }
     }
 
     public CompilationDto toDto(Compilation model) {

@@ -1,11 +1,11 @@
 package ru.practicum.ewm.category.service;
 
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.category.dto.CategoryDtoNew;
-import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.category.repo.CategoryRepo;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -20,11 +20,11 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     private final CategoryRepo categoryRepo;
-    private final CategoryMapper categoryMapper;
+    private final ModelMapper modelMapper;
 
     public CategoryDto createCategory(CategoryDtoNew dto) {
-        Category entity = categoryMapper.toModel(dto);
-        return categoryMapper.toCategoryDto(categoryRepo.save(entity));
+        Category entity = modelMapper.map(dto, Category.class);
+        return modelMapper.map(categoryRepo.save(entity), CategoryDto.class);
     }
 
     public void deleteCategory(Long catId) {
@@ -38,23 +38,23 @@ public class CategoryService {
 
         if (!entity.getName().equals(dto.getName())) {
             entity.setName(dto.getName());
-            return categoryMapper.toCategoryDto(categoryRepo.save(entity));
+            return modelMapper.map(categoryRepo.save(entity), CategoryDto.class);
         }
-        return categoryMapper.toCategoryDto(entity);
+        return modelMapper.map(entity, CategoryDto.class);
     }
 
     @Transactional(readOnly = true)
     public List<CategoryDto> getCategories(Integer from, Integer size) {
         return categoryRepo.findAll(new Page(from, size))
                 .toList().stream()
-                .map(categoryMapper::toCategoryDto)
+                .map(category -> modelMapper.map(category, CategoryDto.class))
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public CategoryDto getCategory(Long catId) {
         checkCategory(catId);
-        return categoryMapper.toCategoryDto(categoryRepo.getReferenceById(catId));
+        return modelMapper.map(categoryRepo.getReferenceById(catId), CategoryDto.class);
     }
 
     private void checkCategory(Long catId) {

@@ -2,12 +2,13 @@ package ru.practicum.ewm.user.service;
 
 import com.querydsl.core.types.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.user.dto.UserDto;
 import ru.practicum.ewm.user.dto.UserDtoNew;
-import ru.practicum.ewm.user.mapper.UserMapper;
+import ru.practicum.ewm.user.dto.UserDtoUpdate;
 import ru.practicum.ewm.user.model.QUser;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repo.UserRepo;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepo userRepo;
-    private final UserMapper userMapper;
+    private final ModelMapper modelMapper;
 
     @Transactional(readOnly = true)
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
@@ -38,21 +39,35 @@ public class UserService {
                 userRepo.findAll(predicate, page).toList();
 
         return users.stream()
-                .map(userMapper::toUserDto)
+                .map(user -> modelMapper.map(user, UserDto.class))
                 .collect(Collectors.toList());
     }
 
     public UserDto createUser(UserDtoNew dto) {
-        User entity = userMapper.toModel(dto);
-        return userMapper.toUserDto(userRepo.save(entity));
+        User entity = modelMapper.map(dto, User.class);
+
+        return modelMapper.map(userRepo.save(entity), UserDto.class);
     }
 
 
     public void deleteUser(Long userId) {
+        userRepo.delete(getUserOrThrow(userId));
+    }
+
+
+    public UserDto update(Long userId, UserDtoUpdate dto) {
+        User user = getUserOrThrow(userId);
+        modelMapper.map(dto, user);
+
+        return modelMapper.map(userRepo.save(user), UserDto.class);
+
+    }
+
+    public User getUserOrThrow(Long userId) {
         if (!userRepo.existsById(userId)) {
             throw new NotFoundException("User by id=" + userId + " was not found.");
         }
 
-        userRepo.deleteById(userId);
+        return userRepo.getReferenceById(userId);
     }
 }

@@ -12,7 +12,6 @@ import ru.practicum.ewm.compilation.model.Compilation;
 import ru.practicum.ewm.compilation.model.QCompilation;
 import ru.practicum.ewm.compilation.repo.CompilationRepo;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.util.EwmUtils;
 import ru.practicum.ewm.util.Page;
 import ru.practicum.ewm.util.QPredicates;
 
@@ -43,9 +42,7 @@ public class CompilationService {
         checkCompilation(compId);
 
         Compilation compilationTarget = compilationRepo.getReferenceById(compId);
-        Compilation src = compilationMapper.toModel(dto);
-
-        EwmUtils.copyNotNullProperties(src, compilationTarget);
+        compilationMapper.updateModel(compilationTarget, dto);
 
         return compilationMapper.toDto(
                 compilationRepo.save(compilationTarget)

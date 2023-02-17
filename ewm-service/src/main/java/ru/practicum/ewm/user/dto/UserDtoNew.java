@@ -17,4 +17,6 @@ public class UserDtoNew {
 
     @Email
     private String email;
+
+    private Boolean privacySubscription = true;
 }

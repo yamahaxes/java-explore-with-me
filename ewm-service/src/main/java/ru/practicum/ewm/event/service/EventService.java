@@ -16,6 +16,7 @@ import ru.practicum.ewm.event.mapper.EventMapper;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.repo.EventRepo;
+import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.ForbiddenException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.request.dto.RequestDto;
@@ -26,7 +27,6 @@ import ru.practicum.ewm.request.repo.RequestRepo;
 import ru.practicum.ewm.stats.client.StatsClient;
 import ru.practicum.ewm.stats.dto.HitDtoRequest;
 import ru.practicum.ewm.user.repo.UserRepo;
-import ru.practicum.ewm.util.EwmUtils;
 import ru.practicum.ewm.util.Page;
 import ru.practicum.ewm.util.QPredicates;
 
@@ -81,7 +81,7 @@ public class EventService {
                                          LocalDateTime rangeStart,
                                          LocalDateTime rangeEnd,
                                          Boolean onlyAvailable,
-                                         Optional<EventSort> sortOptional,
+                                         EventSort eventSort,
                                          Integer from,
                                          Integer size,
                                          HttpServletRequest request) {
@@ -112,15 +112,18 @@ public class EventService {
         List<Predicate> predicatesAll = List.of(predicatesOr.buildOr(), predicatesAnd.buildAnd());
         Predicate predicate = ExpressionUtils.allOf(predicatesAll);
 
-
-        Sort sort = Sort.unsorted();
-        if (sortOptional.isPresent()) {
-            switch (sortOptional.get()) {
+        Sort sort;
+        if (eventSort != null) {
+            switch (eventSort) {
                 case EVENT_DATE:
                     sort = Sort.by("eventDate"); break;
                 case VIEWS:
                     sort = Sort.by("views"); break;
+                default:
+                    throw new BadRequestException("Unsupported sort");
             }
+        } else {
+            sort = Sort.unsorted();
         }
 
         Page page = new Page(from, size, sort);
@@ -138,9 +141,7 @@ public class EventService {
         checkEvent(eventId);
 
         Event entityTarget = eventRepo.getReferenceById(eventId);
-        Event src = eventMapper.toModel(dto);
-
-        EwmUtils.copyNotNullProperties(src, entityTarget);
+        eventMapper.updateModel(entityTarget, dto);
 
         doEventAction(entityTarget, dto.getStateAction());
 
@@ -154,7 +155,12 @@ public class EventService {
         sendStat(request);
         checkEvent(id);
 
-        return eventMapper.toEventFullDto(eventRepo.getEventByIdAndState(id, EventState.PUBLISHED));
+        Event event = eventRepo.getEventByIdAndState(id, EventState.PUBLISHED);
+        Integer views = event.getViews() + 1;
+        event.setViews(views);
+        eventRepo.save(event);
+
+        return eventMapper.toEventFullDto(event);
     }
 
     @Transactional(readOnly = true)
@@ -204,9 +210,7 @@ public class EventService {
             throw new ForbiddenException("Event by id=" + eventId + " already published.");
         }
 
-        Event src = eventMapper.toModel(dto);
-        EwmUtils.copyNotNullProperties(src, eventTarget);
-
+        eventMapper.updateModel(eventTarget, dto);
         doEventAction(eventTarget, dto.getStateAction());
 
         return eventMapper.toEventFullDto(
@@ -317,22 +321,28 @@ public class EventService {
 
     private void sendStat(HttpServletRequest request) {
 
-        //new Thread(() -> {
-            HitDtoRequest dto = new HitDtoRequest();
-            dto.setApp("ewm-main-service");
-            dto.setIp(request.getRemoteAddr());
-            dto.setTimestamp(LocalDateTime.now());
-            dto.setUri(request.getRequestURI());
+        String appName = "ewm-main-service";
+
+        HitDtoRequest dto = new HitDtoRequest();
+        dto.setApp(appName);
+        dto.setIp(request.getRemoteAddr());
+        dto.setTimestamp(LocalDateTime.now());
+        dto.setUri(request.getRequestURI());
+
+        final int numOfAttempts = 3;
+        for (int i = 0; i < numOfAttempts; i++) {
             try {
                 ResponseEntity<Object> result = statsClient.createHit(dto);
                 if (result.getStatusCode() == HttpStatus.CREATED) {
                     log.info("STAT: created hit={}, status={}", dto, result.getStatusCode());
+                    break;
                 } else {
                     log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
                 }
             } catch (RuntimeException ex) {
                 log.info("Create hit error: " + ex.getMessage());
             }
-        //}).start();
+        }
     }
+
 }

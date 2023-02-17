@@ -68,4 +68,8 @@ public class EventMapper {
     public <T> Event toModel(T dto) {
         return modelMapper.map(dto, Event.class);
     }
+
+    public <T> void updateModel(Event model, T dto) {
+        modelMapper.map(dto, model);
+    }
 }
