@@ -321,10 +321,10 @@ public class EventService {
 
     private void sendStat(HttpServletRequest request) {
 
-        String APP_NAME = "ewm-main-service";
+        String appName = "ewm-main-service";
 
         HitDtoRequest dto = new HitDtoRequest();
-        dto.setApp(APP_NAME);
+        dto.setApp(appName);
         dto.setIp(request.getRemoteAddr());
         dto.setTimestamp(LocalDateTime.now());
         dto.setUri(request.getRequestURI());
