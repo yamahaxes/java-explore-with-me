@@ -32,8 +32,8 @@ import ru.practicum.ewm.util.QPredicates;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -47,6 +47,8 @@ public class EventService {
     private final RequestRepo requestRepo;
     private final RequestMapper requestMapper;
     private final StatsClient statsClient;
+
+    private static final String APP_NAME = "ewm-main-service";
 
     @Transactional(readOnly = true)
     public List<EventFullDto> getEvents(List<Long> users,
@@ -67,11 +69,15 @@ public class EventService {
         Page page = new Page(from, size);
         Predicate predicate = predicates.buildAnd();
 
-        return eventMapper.toEventFullDtoList(
+        List<EventFullDto> eventFullDtos = eventMapper.toEventFullDtoList(
                 (predicate == null)
                         ? eventRepo.findAll(page).toList()
                         : eventRepo.findAll(predicate, page).toList()
         );
+
+        updateViews(eventFullDtos);
+
+        return eventFullDtos;
     }
 
     @Transactional(readOnly = true)
@@ -145,22 +151,27 @@ public class EventService {
 
         doEventAction(entityTarget, dto.getStateAction());
 
-        return eventMapper.toEventFullDto(
+        EventFullDto eventFullDto = eventMapper.toEventFullDto(
                 eventRepo.save(entityTarget)
         );
+
+        updateViews(List.of(eventFullDto));
+        return eventFullDto;
     }
 
     @Transactional(readOnly = true)
     public EventFullDto getEvent(Long id, HttpServletRequest request) {
-        sendStat(request);
+
         checkEvent(id);
 
         Event event = eventRepo.getEventByIdAndState(id, EventState.PUBLISHED);
-        Integer views = event.getViews() + 1;
-        event.setViews(views);
-        eventRepo.save(event);
 
-        return eventMapper.toEventFullDto(event);
+        EventFullDto eventFullDto = eventMapper.toEventFullDto(event);
+        updateViews(List.of(eventFullDto));
+
+        sendStat(request);
+
+        return eventFullDto;
     }
 
     @Transactional(readOnly = true)
@@ -180,9 +191,11 @@ public class EventService {
 
         event.setInitiator(userRepo.getReferenceById(userId));
         event.setState(EventState.PENDING);
-        event.setViews(0);
 
-        return eventMapper.toEventFullDto(eventRepo.save(event));
+        EventFullDto eventFullDto = eventMapper.toEventFullDto(eventRepo.save(event));
+        updateViews(List.of(eventFullDto));
+
+        return eventFullDto;
     }
 
     @Transactional(readOnly = true)
@@ -190,10 +203,14 @@ public class EventService {
 
         Optional<Event> optionalEvent = eventRepo.getEventByIdAndInitiatorId(eventId, userId);
 
-        return eventMapper.toEventFullDto(
+        EventFullDto eventFullDto = eventMapper.toEventFullDto(
             optionalEvent
                     .orElseThrow(() -> new NotFoundException("Event by id=" + eventId + " and userId=" + userId + " was not found."))
         );
+
+        updateViews(List.of(eventFullDto));
+
+        return eventFullDto;
     }
 
     public EventFullDto updateEvent(Long userId, Long eventId, EventDtoUpdateUser dto) {
@@ -213,9 +230,11 @@ public class EventService {
         eventMapper.updateModel(eventTarget, dto);
         doEventAction(eventTarget, dto.getStateAction());
 
-        return eventMapper.toEventFullDto(
+        EventFullDto eventFullDto = eventMapper.toEventFullDto(
                 eventRepo.save(eventTarget)
         );
+        updateViews(List.of(eventFullDto));
+        return eventFullDto;
     }
 
     @Transactional(readOnly = true)
@@ -321,10 +340,8 @@ public class EventService {
 
     private void sendStat(HttpServletRequest request) {
 
-        String appName = "ewm-main-service";
-
         HitDtoRequest dto = new HitDtoRequest();
-        dto.setApp(appName);
+        dto.setApp(APP_NAME);
         dto.setIp(request.getRemoteAddr());
         dto.setTimestamp(LocalDateTime.now());
         dto.setUri(request.getRequestURI());
@@ -340,9 +357,41 @@ public class EventService {
                     log.info("STAT: error created hit={}, status={}", dto, result.getStatusCode());
                 }
             } catch (RuntimeException ex) {
-                log.info("Create hit error: " + ex.getMessage());
+                log.info("STAT: Create hit error: {}", ex.getMessage());
             }
         }
     }
 
+    private void updateViews(List<EventFullDto> events) {
+        Map<String, EventFullDto> eventsMap = events.stream()
+                .collect(Collectors.toMap(eventFullDto -> "/events/" + eventFullDto.getId(), eventFullDto -> eventFullDto));
+
+
+        ResponseEntity<Object> responseEntity = statsClient.getStats(LocalDateTime.of(1, 1, 1, 0, 0),
+                LocalDateTime.now(),
+                new ArrayList<>(eventsMap.keySet()),
+                true);
+
+        try {
+            if (responseEntity.getStatusCode() == HttpStatus.OK) {
+
+                List<Object> hits = (ArrayList<Object>) responseEntity.getBody();
+
+                for (Object object: hits) {
+                    Map<Object, Object> hit = (LinkedHashMap<Object, Object>) object;
+
+                    String uri = (String) hit.get("uri");
+                    if (eventsMap.containsKey(uri)) {
+                        Long views = Long.valueOf((Integer) hit.get("hits"));
+                        eventsMap.get(uri).setViews(views);
+                    }
+                }
+                log.info("STAT: update views");
+            } else {
+                log.info("STAT: error get stats. Status={}", responseEntity.getStatusCode());
+            }
+        } catch (RuntimeException ex) {
+            log.info("STAT: error: {}", ex.getMessage());
+        }
+    }
 }

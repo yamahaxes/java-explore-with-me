@@ -66,9 +66,6 @@ public class Event {
     @Column
     private String title;
 
-    @Column
-    private Integer views;
-
     public void incConfirmedRequests() {
         confirmedRequests++;
     }
