@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS events(
     request_moderation BOOLEAN NOT NULL,
     state VARCHAR(20) NOT NULL,
     title VARCHAR(120) NOT NULL,
-    views INT NOT NULL,
 
 CONSTRAINT pk_events_id PRIMARY KEY (id),
 CONSTRAINT pk_events_category_id FOREIGN KEY (category_id) REFERENCES categories(id),

@@ -28,7 +28,7 @@ public class StatsClient extends BaseClient {
 
     public ResponseEntity<Object> getStats(LocalDateTime start,
                                            LocalDateTime end,
-                                           List<String> uri,
+                                           List<String> uris,
                                            boolean unique) {
 
         String path;
@@ -36,15 +36,15 @@ public class StatsClient extends BaseClient {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        if (uri != null) {
+        if (uris != null) {
             parameters = Map.of(
                     "start", start.format(formatter),
                     "end", end.format(formatter),
-                    "uri", uri,
+                    "uris", String.join(",", uris),
                     "unique", unique
             );
 
-            path = "/stats?start={start}&end={end}&uri={uri}&unique={unique}";
+            path = "/stats?start={start}&end={end}&uris={uris}&unique={unique}";
         } else {
             parameters = Map.of(
                     "start", start.format(formatter),
